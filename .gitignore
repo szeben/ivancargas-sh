@@ -1,0 +1,3 @@
+venv/
+odoo.conf
+*__pycache__*

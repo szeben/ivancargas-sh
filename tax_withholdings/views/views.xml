@@ -1,0 +1,60 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+<!--
+    <record model="ir.ui.view" id="tax_withholdings.list">
+      <field name="name">tax_withholdings list</field>
+      <field name="model">tax_withholdings.tax_withholdings</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </tree>
+      </field>
+    </record>
+-->
+
+    <!-- actions opening views on models -->
+<!--
+    <record model="ir.actions.act_window" id="tax_withholdings.action_window">
+      <field name="name">tax_withholdings window</field>
+      <field name="res_model">tax_withholdings.tax_withholdings</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+-->
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="tax_withholdings.action_server">
+      <field name="name">tax_withholdings server</field>
+      <field name="model_id" ref="model_tax_withholdings_tax_withholdings"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+<!--
+    <menuitem name="tax_withholdings" id="tax_withholdings.menu_root"/>
+-->
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 1" id="tax_withholdings.menu_1" parent="tax_withholdings.menu_root"/>
+    <menuitem name="Menu 2" id="tax_withholdings.menu_2" parent="tax_withholdings.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="tax_withholdings.menu_1_list" parent="tax_withholdings.menu_1"
+              action="tax_withholdings.action_window"/>
+    <menuitem name="Server to list" id="tax_withholdings" parent="tax_withholdings.menu_2"
+              action="tax_withholdings.action_server"/>
+-->
+  </data>
+</odoo>
