@@ -1,60 +1,45 @@
 <odoo>
   <data>
-    <!-- explicit list view definition -->
-<!--
-    <record model="ir.ui.view" id="tax_withholdings.list">
-      <field name="name">tax_withholdings list</field>
-      <field name="model">tax_withholdings.tax_withholdings</field>
+
+    <record model="ir.ui.view" id="view_tax_form_inherited">
+      <field name="name">account.tax.form.inherited</field>
+      <field name="model">account.tax</field>
+      <field name="inherit_id" ref="account.view_tax_form" />
       <field name="arch" type="xml">
-        <tree>
-          <field name="name"/>
-          <field name="value"/>
-          <field name="value2"/>
-        </tree>
+
+        <xpath expr="//group/field[@name='tax_scope']" position="after">
+          <field name="withholding_type" />
+        </xpath>
+
       </field>
     </record>
--->
 
-    <!-- actions opening views on models -->
-<!--
-    <record model="ir.actions.act_window" id="tax_withholdings.action_window">
-      <field name="name">tax_withholdings window</field>
-      <field name="res_model">tax_withholdings.tax_withholdings</field>
-      <field name="view_mode">tree,form</field>
-    </record>
--->
+    <record id="view_move_form_inherit" model="ir.ui.view">
+      <field name="name">account.move.form.inherit</field>
+      <field name="model">account.move</field>
+      <field name="inherit_id" ref="account.view_move_form" />
+      <field name="arch" type="xml">
 
-    <!-- server action to the one above -->
-<!--
-    <record model="ir.actions.server" id="tax_withholdings.action_server">
-      <field name="name">tax_withholdings server</field>
-      <field name="model_id" ref="model_tax_withholdings_tax_withholdings"/>
-      <field name="state">code</field>
-      <field name="code">
-        action = {
-          "type": "ir.actions.act_window",
-          "view_mode": "tree,form",
-          "res_model": model._name,
-        }
+        <field name="invoice_vendor_bill_id" position="after">
+          <field name="invoice_tax_id" />
+        </field>
+
       </field>
     </record>
--->
 
-    <!-- Top menu item -->
-<!--
-    <menuitem name="tax_withholdings" id="tax_withholdings.menu_root"/>
--->
-    <!-- menu categories -->
-<!--
-    <menuitem name="Menu 1" id="tax_withholdings.menu_1" parent="tax_withholdings.menu_root"/>
-    <menuitem name="Menu 2" id="tax_withholdings.menu_2" parent="tax_withholdings.menu_root"/>
--->
-    <!-- actions -->
-<!--
-    <menuitem name="List" id="tax_withholdings.menu_1_list" parent="tax_withholdings.menu_1"
-              action="tax_withholdings.action_window"/>
-    <menuitem name="Server to list" id="tax_withholdings" parent="tax_withholdings.menu_2"
-              action="tax_withholdings.action_server"/>
--->
+    <record id="view_invoice_tree_inherit" model="ir.ui.view">
+      <field name="name">account.invoice.tree.inherit</field>
+      <field name="model">account.move</field>
+      <field name="inherit_id" ref="account.view_invoice_tree" />
+      <field name="arch" type="xml">
+
+        <field name="ref" position="after">
+          <field name="withholding_iva"  optional="show"/>
+          <field name="withholding_islr"  optional="show"/>
+        </field>
+
+      </field>
+    </record>
+
   </data>
 </odoo>

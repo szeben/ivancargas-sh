@@ -10,14 +10,13 @@
             "console": "integratedTerminal",
             "program": "/usr/bin/odoo",
             "args": [
-                "--config=${workspaceRoot}/odoo.conf"
+                "--config=${workspaceRoot}/odoo.conf",
+                "--update=tax_withholdings",
+                "--dev=reload,xml"
             ],
             "cwd": "${workspaceRoot}",
             "env": {},
-            "envFile": "${workspaceRoot}/.env",
-            "debugOptions": [
-                "RedirectOutput"
-            ]
+            "envFile": "${workspaceRoot}/.env"
         }
     ]
 }
