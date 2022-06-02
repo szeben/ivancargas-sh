@@ -9,6 +9,7 @@
 
         <xpath expr="//group/field[@name='tax_scope']" position="after">
           <field name="withholding_type" />
+          <field name="withholding_amount" />
         </xpath>
 
       </field>
