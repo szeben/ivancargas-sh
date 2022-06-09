@@ -2,6 +2,7 @@
 
 import math
 from odoo import _, api, fields, models
+from odoo.tools.misc import formatLang
 
 
 class AccountTax(models.Model):
@@ -73,6 +74,9 @@ class AccountMoveWithHoldings(models.Model):
         compute='_compute_withholding',
         currency_field='company_currency_id'
     )
+
+    def _formatLang(self, value):
+        return formatLang(self.env, value)
 
     @api.depends('invoice_tax_id', 'amount_tax')
     def _compute_withholding(self):

@@ -29,6 +29,8 @@
         # 'security/ir.model.access.csv',
         'views/views.xml',
         'views/templates.xml',
+        'report/tax_withholding_reports.xml',
+        'report/tax_withholding_templates.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

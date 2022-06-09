@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="template_tax_withholding_iva">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <style>
+                            table, td, th {
+                                border-collapse: collapse;
+                                margin-left: auto;
+                                margin-right: auto;
+                            }
+
+                            .full-borders td {
+                                border: 1px solid black;
+                            }
+                        </style>
+                        <t t-set="number_withholding" t-value="o.date.strftime('%Y%m') + str(o.sequence_number).rjust(8, '0')" />
+                        <table>
+                            <tbody>
+                                <tr style="border-top: 1px solid black; border-right: 1px solid black; border-left: 1px solid black;">
+                                    <td colspan="15">
+                                        <b>COMPROBANTE DE RETENCION DEL IMPUESTO AL VALOR AGREGADO (I.V.A.):</b>
+                                    </td>
+                                </tr>
+                                <tr style="border-right: 1px solid black; border-left: 1px solid black;">
+                                    <td colspan="15" style="text-align: center; font-size: small;">
+                                        (Decreto con Rango, Valor y Fuerza de Ley que establece el Impuesto al Valor Agregado. Art.11.
+                                        "La Administración Tributaria podrá designar como responsables del pago del impuesto, en calidad
+                                        de agentes de retención, a quienes por sus funciones públicas o por razón de sus actividades
+                                        privadas intervengan en operaciones gravadas con el impuesto establecido en este Decreto con
+                                        Rango, Valor y Fuerza de Ley ...") (Gaceta oficial N° 6152 Extraordinario del 18 de noviembre
+                                        de 2014, Decreto 1.436)
+                                    </td>
+                                </tr>
+                                <tr style="border-right: 1px solid black; border-left: 1px solid black;">
+                                    <td colspan="15" style="text-align: center; font-size: small;">
+                                        Providencia Administrativa Nº SNAT-2015-0049 del 10-08-2015
+                                    </td>
+                                </tr>
+                                <tr style="border-right: 1px solid black; border-left: 1px solid black;">
+                                    <td colspan="5"></td>
+                                    <td colspan="3">Nro de Comprobante de</td>
+                                    <td colspan="2">
+                                        <b t-out="number_withholding" />
+                                    </td>
+                                    <td></td>
+                                    <td colspan="2">Fecha de Emisión:</td>
+                                    <td colspan="2">
+                                        <b t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y')" />
+                                    </td>
+                                </tr>
+                                <tr style="border-right: 1px solid black; border-left: 1px solid black;">
+                                    <td colspan="5">Nombre o Razón Social del Agente de Retención:</td>
+                                    <td colspan="5" style="text-align: center;">Registro de Información Físcal del Agente de Retención:</td>
+                                    <td></td>
+                                    <td colspan="3" style="text-align: center;">Período Físcal:</td>
+                                    <td></td>
+                                </tr>
+                                <tr style="border-right: 1px solid black; border-left: 1px solid black;">
+                                    <td colspan="5">
+                                        <b>GRUPO BRACHO DIAZ C.A.</b>
+                                    </td>
+                                    <td colspan="5" style="text-align: center;">
+                                        <b>J-41192331-1</b>
+                                    </td>
+                                    <td></td>
+                                    <td style="text-align: center;">Año:</td>
+                                    <td></td>
+                                    <td style="text-align: center;">Mes:</td>
+                                    <td></td>
+                                </tr>
+                                <tr style="border-right: 1px solid black; border-left: 1px solid black;">
+                                    <td colspan="11"></td>
+                                    <td style="text-align: center;">
+                                        <b t-out="o.date.year" />
+                                    </td>
+                                    <td></td>
+                                    <td style="text-align: center;">
+                                        <b t-out="o.date.strftime('%m')" />
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid black; border-right: 1px solid black; border-left: 1px solid black;">
+                                    <td colspan="15">
+                                        <span>Domicilio Fiscal del Agente de Retención:</span>
+                                        <br />
+                                        <b>AV URDANETA CON CALLE 13 CC PROFESIONAL EL QUIJOTE NIVEL PB LOCAL L-9</b>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid black; border-right: 1px solid black; border-left: 1px solid black;">
+                                    <td colspan="8">
+                                        <span>Nombre o Razón Social del Sujeto Retenido:</span>
+                                        <br />
+                                        <b>DISTRIBUIDORA LA ANDINITA 1012, C.A.</b>
+                                    </td>
+                                    <td colspan="7" style="text-align: center;">
+                                        <span>Número de RIF del Proveedor:</span>
+                                        <br />
+                                        <b>J-40107101-5</b>
+                                    </td>
+                                </tr>
+                                <tr class="full-borders">
+                                    <td>Oper. Nro.</td>
+                                    <td>Fecha de la Factura ND/NC</td>
+                                    <td>Nro.de Retención:</td>
+                                    <td>Nro de Factura:</td>
+                                    <td>Nro de Control de Factura:</td>
+                                    <td>Nro de Nota de Crédito:</td>
+                                    <td>Nro de Nota de Débito:</td>
+                                    <td>Tipo de Transacción</td>
+                                    <td>Factura Afectada</td>
+                                    <td>Total Compras Incluyendo IVA</td>
+                                    <td>Compras sin derecho a Crédito</td>
+                                    <td>Base Imponible</td>
+                                    <td>% Alicuota</td>
+                                    <td>Impuesto I.V.A.</td>
+                                    <td>I.V.A. Retenido</td>
+                                </tr>
+                                <tr class="full-borders">
+                                    <td>
+                                        <t t-out="o_index + 1" />
+                                    </td>
+                                    <td>
+                                        <span t-field="o.date"/>
+                                    </td>
+                                    <td>
+                                        <t t-out="number_withholding" />
+                                    </td>
+                                    <td>
+                                        <span t-field="o.name"/>
+                                    </td>
+                                    <td>
+                                        <t t-out="str(o.id).rjust(8, '0')" />
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>RET</td>
+                                    <td></td>
+                                    <td>
+                                        <t t-out="o._formatLang(o.amount_total + o.withholding_iva)" />
+                                    </td>
+                                    <td>-</td>
+                                    <td>
+                                        <t t-out="o._formatLang(o.amount_untaxed)" />
+                                    </td>
+                                    <td>16,00</td>
+                                    <td>
+                                        <t t-out="o._formatLang(o.amount_tax + o.withholding_iva)" />
+                                    </td>
+                                    <td>
+                                        <t t-out="o._formatLang(o.withholding_iva)" />
+                                    </td>
+                                </tr>
+                                <tr class="full-borders">
+                                    <td colspan="8"></td>
+                                    <td>
+                                        <b>Totales</b>
+                                    </td>
+                                    <td>
+                                        <span t-out="o._formatLang(o.amount_total + o.withholding_iva)" />
+                                    </td>
+                                    <td>-</td>
+                                    <td>
+                                        <span t-out="o._formatLang(o.amount_untaxed)" />
+                                    </td>
+                                    <td></td>
+                                    <td>
+                                        <span t-out="o._formatLang(o.amount_tax + o.withholding_iva)" />
+                                    </td>
+                                    <td>
+                                        <span t-out="o._formatLang(o.withholding_iva)" />
+                                    </td>
+                                </tr>
+                                <tr class="full-borders">
+                                    <td colspan="11"></td>
+                                    <td colspan="3">
+                                        <b>Total Menos Retenciones:</b>
+                                    </td>
+                                    <td>
+                                        <b t-out="o._formatLang(o.amount_total)"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br />
+                        <div style="text-align: center;  align-content: center;">
+                            <p>
+                                Este comprobante se emite en función a lo establecido en el artículo 16 de
+                                la Providencia Administrativa Nº SNAT-2015-0049 de fecha 10/08/2015
+                            </p>
+                            <br />
+                            <br />
+                            <table>
+                                <tbody>
+                                    <tr style="text-align: center;">
+                                        <td style="width: 30%; border-top: 1px solid black; border-collapse: separate;">
+                                            <b>Firma del Agente de Retención:</b>
+                                        </td>
+                                        <td style="width: 30%;"></td>
+                                        <td style="width: 30%; border-top: 1px solid black; border-collapse: separate;">
+                                            <b>Fecha de Recibo y Firma del Receptor:</b>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    <template id="template_tax_withholding_islr">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Report title</h2>
+                        <p>This object's name is <span t-field="o.name"/>
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
