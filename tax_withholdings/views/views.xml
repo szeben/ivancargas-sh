@@ -7,9 +7,19 @@
       <field name="inherit_id" ref="account.view_tax_form" />
       <field name="arch" type="xml">
 
+        <xpath expr="//group/label[@for='amount']" position="attributes">
+          <attribute name="attrs">{'invisible':['|', ('amount_type', 'not in', ('fixed', 'percent', 'division')), ('withholding_type', 'in', ('islr', 'iva'))]}</attribute>
+        </xpath>
+        <xpath expr="//group/div[1]" position="attributes">
+          <attribute name="attrs">{'invisible':['|', ('amount_type', 'not in', ('fixed', 'percent', 'division')), ('withholding_type', 'in', ('islr', 'iva'))]}</attribute>
+        </xpath>
         <xpath expr="//group/field[@name='tax_scope']" position="after">
-          <field name="withholding_type" />
-          <field name="withholding_amount" />
+          <field name="withholding_type" attrs="{'invisible':[('amount_type', 'not in', ('fixed', 'percent', 'division'))]}" />
+          <label for="withholding_amount" attrs="{'invisible':['|', ('amount_type', 'not in', ('fixed', 'percent', 'division')), ('withholding_type', 'not in', ('islr', 'iva'))]}"/>
+          <div attrs="{'invisible':['|', ('amount_type', 'not in', ('fixed', 'percent', 'division')), ('withholding_type', 'not in', ('islr', 'iva'))]}">
+            <field name="withholding_amount" class="oe_inline" nolabel="1"/>
+            <span class="o_form_label oe_inline" attrs="{'invisible':[('amount_type','=','fixed')]}">%</span>
+          </div>
         </xpath>
 
       </field>
@@ -35,8 +45,8 @@
       <field name="arch" type="xml">
 
         <field name="ref" position="after">
-          <field name="withholding_iva"  optional="show"/>
-          <field name="withholding_islr"  optional="show"/>
+          <field name="withholding_iva" optional="show"/>
+          <field name="withholding_islr" optional="show"/>
         </field>
 
       </field>

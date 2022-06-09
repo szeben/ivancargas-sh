@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import json
-from collections import defaultdict
-
+import math
 from odoo import _, api, fields, models
-from odoo.tools.misc import formatLang
 
 
 class AccountTax(models.Model):
@@ -23,6 +20,34 @@ class AccountTax(models.Model):
         default=0.0
     )
 
+    def _compute_amount(self, base_amount, price_unit, quantity=1.0, product=None, partner=None, use_withholding=False):
+        self.ensure_one()
+        amount = self.amount
+
+        if use_withholding and (self.withholding_type in {"iva", "islr"}):
+            amount = self.withholding_amount or amount
+
+        if self.amount_type == 'fixed':
+            if base_amount:
+                return math.copysign(quantity, base_amount) * amount
+            else:
+                return quantity * amount
+
+        price_include = self._context.get(
+            'force_price_include', self.price_include)
+
+        if self.amount_type == 'percent' and not price_include:
+            return base_amount * amount / 100
+
+        if self.amount_type == 'percent' and price_include:
+            return base_amount - (base_amount / (1 + amount / 100))
+
+        if self.amount_type == 'division' and not price_include:
+            return base_amount / (1 - amount / 100) - base_amount if (1 - amount / 100) else 0.0
+
+        if self.amount_type == 'division' and price_include:
+            return base_amount - (base_amount * (amount / 100))
+
 
 class AccountMoveWithHoldings(models.Model):
     _inherit = "account.move"
@@ -34,7 +59,7 @@ class AccountMoveWithHoldings(models.Model):
             ("withholding_type", "=", "iva"),
             ("type_tax_use", "=", "purchase"),
             ("active", "=", True)
-        ]
+        ],
     )
     withholding_iva = fields.Monetary(
         string='Retención del IVA',
@@ -52,180 +77,19 @@ class AccountMoveWithHoldings(models.Model):
     @api.depends('invoice_tax_id', 'amount_tax')
     def _compute_withholding(self):
         for move in self:
-            # withholding IVA
-            if move.invoice_tax_id:
-                instance_tax = self.env["account.tax"].new(
-                    move.invoice_tax_id.copy_data({
-                        "amount": move.invoice_tax_id.withholding_amount
-                    })[0]
-                )
-                move.withholding_iva = instance_tax._compute_amount(
-                    move.amount_tax, 0)
-            else:
-                move.withholding_iva = 0.0
-
-            # withholding ISLR
             if move._payment_state_matters():
-                sign = 1 if move.move_type == 'entry' or move.is_outbound() else -1
-                amount_total_withholding = 0.0
+                amount_total_withholding_islr = 0.0
+                amount_total_withholding_iva = 0.0
 
-                for line in move.invoice_line_ids:
-                    if line.tax_ids:
-                        withholding = line.tax_ids.filtered(
-                            lambda tax: tax.withholding_type == "islr"
-                        )
-                        if withholding:
-                            withholding.ensure_one()
-                            amount_total_tax = sum(
-                                tax._compute_amount(
-                                    line.amount_currency,
-                                    sign*line.price_unit,
-                                    line.quantity,
-                                    line.product_id,
-                                    line.partner_id
-                                ) for tax in line.tax_ids
-                            )
-                            instance_tax = self.env["account.tax"].new(
-                                withholding.copy_data({
-                                    "amount": withholding.withholding_amount
-                                })[0]
-                            )
-                            amount_total_withholding += sign * instance_tax._compute_amount(
-                                amount_total_tax, 0)
+                for line in move.line_ids:
+                    if line.tax_line_id:
+                        if line.tax_line_id.withholding_type == "iva":
+                            amount_total_withholding_iva += line.amount_currency
+                        elif line.tax_line_id.withholding_type == "islr":
+                            amount_total_withholding_islr += line.amount_currency
 
-                move.withholding_islr = amount_total_withholding
-
-    def _prepare_tax_lines_data_for_totals_from_invoice(self, tax_line_id_filter=None, tax_ids_filter=None):
-        self.ensure_one()
-
-        tax_line_id_filter = tax_line_id_filter or (lambda aml, tax: True)
-        tax_ids_filter = tax_ids_filter or (lambda aml, tax: True)
-
-        balance_multiplicator = -1 if self.is_inbound() else 1
-        tax_lines_data = []
-
-        for line in self.line_ids:
-            if line.tax_line_id and tax_line_id_filter(line, line.tax_line_id):
-                tax_lines_data.append({
-                    'line_key': 'tax_line_%s' % line.id,
-                    'tax_amount': line.amount_currency*balance_multiplicator,
-                    'tax': line.tax_line_id,
-                })
-
-            if line.tax_ids:
-                for base_tax in line.tax_ids.flatten_taxes_hierarchy():
-                    if tax_ids_filter(line, base_tax):
-                        tax_lines_data.append({
-                            'line_key': 'base_line_%s' % line.id,
-                            'base_amount': line.amount_currency*balance_multiplicator,
-                            'tax': base_tax,
-                            'tax_affecting_base': line.tax_line_id,
-                        })
-
-        return tax_lines_data
-
-    @api.model
-    def _get_tax_totals(self, partner, tax_lines_data, amount_total, amount_untaxed, currency):
-        lang_env = self.with_context(lang=partner.lang).env
-        account_tax = self.env['account.tax']
-
-        grouped_taxes = defaultdict(
-            lambda: defaultdict(
-                lambda: {
-                    'base_amount': 0.0,
-                    'tax_amount': 0.0,
-                    'base_line_keys': set()
-                }
-            )
-        )
-        subtotal_priorities = {}
-
-        for line_data in tax_lines_data:
-            tax_group = line_data['tax'].tax_group_id
-
-            # Update subtotals priorities
-            if tax_group.preceding_subtotal:
-                subtotal_title = tax_group.preceding_subtotal
-                new_priority = tax_group.sequence
-            else:
-                # When needed, the default subtotal is always the most prioritary
-                subtotal_title = _("Untaxed Amount")
-                new_priority = 0
-
-            if subtotal_title not in subtotal_priorities or new_priority < subtotal_priorities[subtotal_title]:
-                subtotal_priorities[subtotal_title] = new_priority
-
-            # Update tax data
-            tax_group_vals = grouped_taxes[subtotal_title][tax_group]
-
-            if 'base_amount' in line_data:
-                # Base line
-                if tax_group == line_data.get('tax_affecting_base', account_tax).tax_group_id:
-                    # In case the base has a tax_line_id belonging to the same group as the base tax,
-                    # the base for the group will be computed by the base tax's original line (the one with tax_ids and no tax_line_id)
-                    continue
-
-                if line_data['line_key'] not in tax_group_vals['base_line_keys']:
-                    # If the base line hasn't been taken into account yet, at its amount to the base total.
-                    tax_group_vals['base_line_keys'].add(line_data['line_key'])
-                    tax_group_vals['base_amount'] += line_data['base_amount']
-
-            else:
-                # Tax line
-                tax_group_vals['tax_amount'] += line_data['tax_amount']
-
-        # Compute groups_by_subtotal
-        groups_by_subtotal = {}
-        for subtotal_title, groups in grouped_taxes.items():
-            groups_vals = [{
-                'tax_group_name': group.name,
-                'tax_group_amount': amounts['tax_amount'],
-                'tax_group_base_amount': amounts['base_amount'],
-                'formatted_tax_group_amount': formatLang(lang_env, amounts['tax_amount'], currency_obj=currency),
-                'formatted_tax_group_base_amount': formatLang(lang_env, amounts['base_amount'], currency_obj=currency),
-                'tax_group_id': group.id,
-                'group_key': '%s-%s' % (subtotal_title, group.id),
-            } for group, amounts in sorted(groups.items(), key=lambda l: l[0].sequence)]
-
-            groups_by_subtotal[subtotal_title] = groups_vals
-
-        # Compute subtotals
-        subtotals_list = []  # List, so that we preserve their order
-        previous_subtotals_tax_amount = 0
-        for subtotal_title in sorted((sub for sub in subtotal_priorities), key=lambda x: subtotal_priorities[x]):
-            subtotal_value = amount_untaxed + previous_subtotals_tax_amount
-            subtotals_list.append({
-                'name': subtotal_title,
-                'amount': subtotal_value,
-                'formatted_amount': formatLang(lang_env, subtotal_value, currency_obj=currency),
-            })
-
-            subtotal_tax_amount = sum(
-                group_val['tax_group_amount'] for group_val in groups_by_subtotal[subtotal_title]
-            )
-            previous_subtotals_tax_amount += subtotal_tax_amount
-
-        if self.amount_tax and self.invoice_tax_id:
-            amount = self.invoice_tax_id.amount
-
-            if self.invoice_tax_id.amount_type == "percent":
-                amount /= 100.0
-
-        # Assign json-formatted result to the field
-        return {
-            'amount_total': amount_total,
-            'amount_untaxed': amount_untaxed,
-            'formatted_amount_total': formatLang(lang_env, amount_total, currency_obj=currency),
-            'formatted_amount_untaxed': formatLang(lang_env, amount_untaxed, currency_obj=currency),
-            'groups_by_subtotal': groups_by_subtotal,
-            'subtotals': subtotals_list,
-            'allow_tax_edition': False,
-        }
-
-    def _preprocess_taxes_map(self, taxes_map):
-        """ Useful in case we want to pre-process taxes_map """
-        taxes_map = super()._preprocess_taxes_map(taxes_map)
-        return taxes_map
+                move.withholding_iva = amount_total_withholding_iva
+                move.withholding_islr = amount_total_withholding_islr
 
     def _recompute_tax_lines(self, recompute_tax_base_amount=False):
         """ Compute the dynamic tax lines of the journal entry.
@@ -298,6 +162,10 @@ class AccountMoveWithHoldings(models.Model):
         if not recompute_tax_base_amount:
             self.line_ids -= to_remove
 
+        amount_total_tax = 0.0
+        amount_total_withholding_irsl = 0.0
+        sign = 1 if self.move_type == 'entry' or self.is_outbound() else -1
+
         # ==== Mount base lines ====
         for line in self.line_ids.filtered(lambda line: not line.tax_repartition_line_id):
             # Don't call compute_all if there is no tax.
@@ -307,6 +175,26 @@ class AccountMoveWithHoldings(models.Model):
                 continue
 
             compute_all_vals = _compute_base_line_taxes(line)
+
+            # Calculando retensiones ISLR
+            amount_tax = sum(
+                tax.get("amount") for tax in compute_all_vals.get("taxes", [])
+            )
+            amount_total_tax += amount_tax
+
+            withholding = line.tax_ids.filtered(
+                lambda tax: tax.withholding_type == "islr")
+            if withholding:
+                withholding.ensure_one()
+                amount_withholding_irls = sign * withholding._compute_amount(
+                    amount_tax, 0, use_withholding=True
+                )
+                index = list(tax.get("id") for tax in compute_all_vals.get("taxes", [])).index(
+                    withholding._origin.id
+                )
+                amount_total_withholding_irsl += amount_withholding_irls
+                compute_all_vals["total_included"] += amount_withholding_irls
+                compute_all_vals["taxes"][index]['amount'] = amount_withholding_irls
 
             # Assign tags on base line
             if not recompute_tax_base_amount:
@@ -329,8 +217,43 @@ class AccountMoveWithHoldings(models.Model):
                 })
                 taxes_map_entry['amount'] += tax_vals['amount']
                 taxes_map_entry['tax_base_amount'] += self._get_base_amount_to_display(
-                    tax_vals['base'], tax_repartition_line, tax_vals['group'])
+                    tax_vals['base'],
+                    tax_repartition_line,
+                    tax_vals['group']
+                )
                 taxes_map_entry['grouping_dict'] = grouping_dict
+
+        # Calcula retensiones para el IVA
+        if self.invoice_tax_id:
+            tax_vals = self.invoice_tax_id._origin.with_context(force_sign=self._get_tax_force_sign()).compute_all(
+                price_unit=0,
+                currency=self.currency_id,
+                partner=self.partner_id
+            ).get("taxes")[0]
+            tax_vals["amount"] = self.invoice_tax_id._compute_amount(
+                (sign*amount_total_tax) - amount_total_withholding_irsl, 0, use_withholding=True
+            )
+            grouping_dict = self._get_tax_grouping_key_from_base_line(
+                line, tax_vals)
+            grouping_key = _serialize_tax_grouping_key(grouping_dict)
+
+            tax_repartition_line = self.env['account.tax.repartition.line'].browse(
+                tax_vals['tax_repartition_line_id'])
+            tax = tax_repartition_line.invoice_tax_id or tax_repartition_line.refund_tax_id
+
+            taxes_map_entry = taxes_map.setdefault(grouping_key, {
+                'tax_line': None,
+                'amount': 0.0,
+                'tax_base_amount': 0.0,
+                'grouping_dict': False,
+            })
+            taxes_map_entry['amount'] += tax_vals['amount']
+            taxes_map_entry['tax_base_amount'] += self._get_base_amount_to_display(
+                tax_vals['base'],
+                tax_repartition_line,
+                tax_vals['group']
+            )
+            taxes_map_entry['grouping_dict'] = grouping_dict
 
         # ==== Pre-process taxes_map ====
         taxes_map = self._preprocess_taxes_map(taxes_map)
