@@ -21,7 +21,9 @@
                             <tbody>
                                 <tr style="border-top: 1px solid black; border-right: 1px solid black; border-left: 1px solid black;">
                                     <td colspan="15">
-                                        <b>COMPROBANTE DE RETENCION DEL IMPUESTO AL VALOR AGREGADO (I.V.A.):</b>
+                                        <u>
+                                            <b>COMPROBANTE DE RETENCION DEL IMPUESTO AL VALOR AGREGADO (I.V.A.):</b>
+                                        </u>
                                     </td>
                                 </tr>
                                 <tr style="border-right: 1px solid black; border-left: 1px solid black;">
@@ -156,7 +158,9 @@
                                 <tr class="full-borders">
                                     <td colspan="8"></td>
                                     <td>
-                                        <b>Totales</b>
+                                        <u>
+                                            <b>Totales</b>
+                                        </u>
                                     </td>
                                     <td>
                                         <span t-out="o._formatLang(o.amount_total + o.withholding_iva)" />
@@ -176,7 +180,9 @@
                                 <tr class="full-borders">
                                     <td colspan="11"></td>
                                     <td colspan="3">
-                                        <b>Total Menos Retenciones:</b>
+                                        <u>
+                                            <b>Total Menos Retenciones:</b>
+                                        </u>
                                     </td>
                                     <td>
                                         <b t-out="o._formatLang(o.amount_total)"/>
@@ -211,14 +217,168 @@
             </t>
         </t>
     </template>
+
     <template id="template_tax_withholding_islr">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
                     <div class="page">
-                        <h2>Report title</h2>
-                        <p>This object's name is <span t-field="o.name"/>
-                        </p>
+                        <style>
+                            table, td, th {
+                                border-collapse: collapse;
+                                margin-left: auto;
+                                margin-right: auto;
+                            }
+
+                            .full-borders td {
+                                border: 1px solid black;
+                            }
+                        </style>
+                        <table style="width: 100%;">
+                            <tbody>
+                                <tr>
+                                    <td colspan="10">
+                                        <i>EMPRESA SOCIALISTA DE ALIMENTOS, S.A.</i>
+                                        <br />
+                                        <i>J-40420375-3</i>
+                                    </td>
+                                </tr>
+                                <tr style="text-align: right;">
+                                    <td colspan="10">
+                                        <b>Periodo: 202111</b>
+                                    </td>
+                                </tr>
+                                <tr style="text-align: center; font-size: large;">
+                                    <td colspan="10">
+                                        <b>Comprobante de Retención de Impuesto Sobre La Renta</b>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="10">
+                                        Para dar cumplimiento a lo establecido en el Articulo Nº 9 del reglamento parcial de
+                                        la Ley de Impuesto sobre la Renta en materia de retenciones publicado en gaceta
+                                        oficial Nº 36.206 decreto Nº 1.808 de fecha 12-05-1997
+                                    </td>
+                                </tr>
+                                <tr style="height: 1em;">
+                                    <td colspan="10"></td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td colspan="3" style="border: 1px solid black; border-collapse: separate;">
+                                        <span style="font-size: small;">
+                                            <i>Nombre o Razón Social Agente de Retención:</i>
+                                        </span>
+                                        <br />
+                                        <span>EMPRESA SOCIALISTA DE ALIMENTOS S.A</span>
+                                    </td>
+                                    <td colspan="2"></td>
+                                    <td colspan="3" style="border: 1px solid black; border-collapse: separate;">
+                                        <span style="font-size: small;">
+                                            <i>R.I.F Agente de Retención</i>
+                                        </span>
+                                        <br />
+                                        <span>J-40420375-3</span>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr style="height: 1em;">
+                                    <td colspan="10"></td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td colspan="3" style="border: 1px solid black;">
+                                        <span style="font-size: small;">
+                                            <i>Nombre o Razón Social del Sujeto Retenido:</i>
+                                        </span>
+                                        <br />
+                                        <span>COMERCIALIZADORA HB DE HENDER BRACHO</span>
+                                    </td>
+                                    <td colspan="2"></td>
+                                    <td colspan="3" style="border: 1px solid black;">
+                                        <span style="font-size: small;">
+                                            <i>R.I.F sujeto Retenido</i>
+                                        </span>
+                                        <br />
+                                        <span>V-04152981-0</span>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr style="height: 1em;">
+                                    <td colspan="10"></td>
+                                </tr>
+                                <tr class="full-borders">
+                                    <td>Operación Nº</td>
+                                    <td>Fecha Factura</td>
+                                    <td>Número Control</td>
+                                    <td>Número de Factura</td>
+                                    <td>Cod. Retención</td>
+                                    <td>Base Legal Decreto 1808</td>
+                                    <td>%</td>
+                                    <td>Monto Bruto</td>
+                                    <td>Base</td>
+                                    <td>Impuesto Retenido</td>
+                                </tr>
+                                <tr class="full-borders">
+                                    <td t-out="o_index + 1" />
+                                    <td>
+                                        <span t-field="o.date" />
+                                    </td>
+                                    <td>00-000529</td>
+                                    <td>000467</td>
+                                    <td>071</td>
+                                    <td>Art 9º Nº15</td>
+                                    <td>1.00%</td>
+                                    <td>16,000.00</td>
+                                    <td>16,000.00</td>
+                                    <td>159.98</td>
+                                </tr>
+                                <tr class="full-borders">
+                                    <td colspan="7" style="text-align: center;">
+                                        <b>Totales</b>
+                                    </td>
+                                    <td>16,000.00</td>
+                                    <td>16,000.00</td>
+                                    <td>159.98</td>
+                                </tr>
+                                <tr style="height: 1em;">
+                                    <td colspan="10" style="padding-left: 1rem;">
+                                        Tipo de Retención de Impuesto: ISLR
+                                    </td>
+                                </tr>
+                                <tr style="height: 1em;">
+                                    <td colspan="10" style="text-align: right;">
+                                        <span>Monto a pagar a sujeto retenido:</span>
+                                        <span>15.840,02</span>
+                                    </td>
+                                </tr>
+                                <tr style="text-align: center;">
+                                    <td colspan="6"></td>
+                                    <td colspan="3" style="word-spacing: 5em;">/ /</td>
+                                    <td></td>
+                                </tr>
+                                <tr style="text-align: center; vertical-align: top; height: 5em;">
+                                    <td></td>
+                                    <td colspan="3" style="border-top: 1px solid black;">
+                                        <span>Sello y Firma Agente de Retención</span>
+                                        <br />
+                                        <span>Fecha 13/12/2021</span>
+                                    </td>
+                                    <td colspan="2"></td>
+                                    <td colspan="3" style="border-top: 1px solid black;">
+                                        Fecha Recepción Sujeto Retenido
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr style="text-align: center; vertical-align: top;">
+                                    <td colspan="6"></td>
+                                    <td colspan="3" style="border-top: 1px solid black;">
+                                        Sello o Firma del sujeto Retenido
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </t>
             </t>
