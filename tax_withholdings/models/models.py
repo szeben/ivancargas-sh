@@ -61,6 +61,7 @@ class AccountMoveWithHoldings(models.Model):
             ("type_tax_use", "=", "purchase"),
             ("active", "=", True)
         ],
+        required=False,
     )
     withholding_iva = fields.Monetary(
         string='Retención del IVA',
@@ -74,16 +75,48 @@ class AccountMoveWithHoldings(models.Model):
         compute='_compute_withholding',
         currency_field='company_currency_id'
     )
+    sequence_withholding_iva = fields.Char(
+        string="Secuencia de la retención del IVA",
+        compute="_compute_secuence_withholding",
+        store=True,
+        copy=False
+    )
+    sequence_withholding_islr = fields.Char(
+        string="Secuencia de la retención del ISLR",
+        compute="_compute_secuence_withholding",
+        store=True,
+        copy=False
+    )
+    reference_number = fields.Char(
+        string="Número de referencia",
+        copy=False
+    )
+    invoice_control_number = fields.Char(
+        string="Número de control de factura",
+        copy=False
+    )
 
-    def _formatLang(self, value):
+    def format_lang(self, value):
         return formatLang(self.env, value)
+
+    def get_first_withholding_islr(self):
+        self.ensure_one()
+        return next(
+            filter(
+                lambda l: l.tax_line_id
+                and l.tax_line_id.withholding_type == "islr"
+                and l.tax_line_id.withholding_amount > 0.0,
+                self.line_ids,
+            ),
+            None
+        )
 
     @api.depends('invoice_tax_id', 'amount_tax')
     def _compute_withholding(self):
         for move in self:
             if move._payment_state_matters():
-                amount_total_withholding_islr = 0.0
                 amount_total_withholding_iva = 0.0
+                amount_total_withholding_islr = 0.0
 
                 for line in move.line_ids:
                     if line.tax_line_id:
@@ -92,8 +125,21 @@ class AccountMoveWithHoldings(models.Model):
                         elif line.tax_line_id.withholding_type == "islr":
                             amount_total_withholding_islr += line.amount_currency
 
-                move.withholding_iva = amount_total_withholding_iva
-                move.withholding_islr = amount_total_withholding_islr
+                if amount_total_withholding_iva > 0.0:
+                    move.withholding_iva = amount_total_withholding_iva
+                if amount_total_withholding_islr > 0.0:
+                    move.withholding_islr = amount_total_withholding_islr
+
+    @api.depends("state", "withholding_iva", "withholding_islr")
+    def _compute_secuence_withholding(self):
+        for move in self:
+            if move.state == "posted":
+                if move.withholding_iva and not move.sequence_withholding_iva:
+                    move.sequence_withholding_iva = self.env["ir.sequence"].next_by_code(
+                        "account.move.withholding.iva")
+                if move.withholding_islr and not move.sequence_withholding_islr:
+                    move.sequence_withholding_islr = self.env["ir.sequence"].next_by_code(
+                        "account.move.withholding.islr")
 
     def _recompute_tax_lines(self, recompute_tax_base_amount=False):
         """ Compute the dynamic tax lines of the journal entry.
@@ -326,3 +372,29 @@ class AccountMoveWithHoldings(models.Model):
             if in_draft_mode:
                 taxes_map_entry['tax_line'].update(
                     taxes_map_entry['tax_line']._get_fields_onchange_balance(force_computation=True))
+
+    @api.model
+    def fields_view_get(self, view_id=None, view_type='form', toolbar=False, submenu=False):
+        res = super().fields_view_get(view_id, view_type, toolbar, submenu)
+        if self._context.get("default_move_type") not in ('in_invoice', 'in_refund', 'in_receipt'):
+            remove_report_ids = [
+                self.env.ref(f"tax_withholdings.{name}").id for name in (
+                    "report_tax_withholding_iva",
+                    "report_tax_withholding_islr",
+                )
+            ]
+            if view_type == 'form' and remove_report_ids and \
+                    toolbar and res['toolbar'] and res['toolbar'].get('print'):
+                remove_report_records = list(filter(
+                    lambda rec: rec.get("id") in remove_report_ids,
+                    res['toolbar'].get('print')
+                ))
+                if remove_report_records:
+                    for report_record in remove_report_records:
+                        if report_record:
+                            res['toolbar'].get('print').remove(report_record)
+        return res
+
+    @api.onchange("invoice_tax_id")
+    def _onchange_invoice_tax_id(self):
+        self._onchange_invoice_line_ids()

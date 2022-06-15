@@ -32,8 +32,13 @@
       <field name="arch" type="xml">
 
         <field name="invoice_vendor_bill_id" position="after">
-          <field name="invoice_tax_id" />
+          <field name="invoice_tax_id" attrs="{'invisible': [('move_type', 'not in', ('in_invoice', 'in_refund', 'in_receipt'))], 'readonly': [('state', '!=', 'draft')]}" />
         </field>
+
+        <div name="journal_div" position="after">
+          <field name="reference_number" attrs="{'invisible': [('move_type', 'not in', ('in_invoice', 'in_refund', 'in_receipt'))], 'readonly': [('state', '!=', 'draft')]}" />
+          <field name="invoice_control_number" attrs="{'invisible': [('move_type', 'not in', ('in_invoice', 'in_refund', 'in_receipt'))], 'readonly': [('state', '!=', 'draft')]}" />
+        </div>
 
       </field>
     </record>
@@ -45,11 +50,25 @@
       <field name="arch" type="xml">
 
         <field name="ref" position="after">
-          <field name="withholding_iva" optional="show"/>
-          <field name="withholding_islr" optional="show"/>
+          <field name="withholding_iva" optional="show" invisible="context.get('default_move_type') not in ('in_invoice', 'in_refund','in_receipt')" groups="base.group_user" sum="Total de Retención del IVA"/>
+          <field name="withholding_islr" optional="show" invisible="context.get('default_move_type') not in ('in_invoice', 'in_refund','in_receipt')" groups="base.group_user" sum="Total de Retención del ISLR"/>
         </field>
 
       </field>
+    </record>
+
+    <record id="secuence_move_withholding_iva" model="ir.sequence">
+      <field name="name">Secuencia de la retención del IVA</field>
+      <field name="code">account.move.withholding.iva</field>
+      <field name="number_next_actual">1</field>
+      <field name="padding">1</field>
+    </record>
+
+    <record id="secuence_move_withholding_islr" model="ir.sequence">
+      <field name="name">Secuencia de la retención del ISLR</field>
+      <field name="code">account.move.withholding.islr</field>
+      <field name="number_next_actual">1</field>
+      <field name="padding">1</field>
     </record>
 
   </data>
