@@ -111,7 +111,7 @@ class AccountMoveWithHoldings(models.Model):
             None
         )
 
-    @api.depends('invoice_tax_id', 'amount_tax')
+    @api.depends('invoice_tax_id', 'amount_tax', 'line_ids.tax_line_id')
     def _compute_withholding(self):
         for move in self:
             if move._payment_state_matters():
@@ -125,13 +125,14 @@ class AccountMoveWithHoldings(models.Model):
                         elif line.tax_line_id.withholding_type == "islr":
                             amount_total_withholding_islr += line.amount_currency
 
-                if amount_total_withholding_iva > 0.0:
+                if amount_total_withholding_iva != 0.0:
                     move.withholding_iva = amount_total_withholding_iva
-                if amount_total_withholding_islr > 0.0:
+                if amount_total_withholding_islr != 0.0:
                     move.withholding_islr = amount_total_withholding_islr
 
     @api.depends("state", "withholding_iva", "withholding_islr")
     def _compute_secuence_withholding(self):
+        print("Load state")
         for move in self:
             if move.state == "posted":
                 if move.withholding_iva and not move.sequence_withholding_iva:
