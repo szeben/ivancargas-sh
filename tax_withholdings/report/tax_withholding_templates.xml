@@ -5,7 +5,7 @@
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
                     <div class="page">
-                        <t t-if="o.withholding_iva and o.withholding_iva != 0.0">
+                        <t t-if="(o.withholding_iva or 0.0) &lt; 0.0">
                             <style>
                                 table, td, th {
                                     border-collapse: collapse;
@@ -17,17 +17,18 @@
                                     border: 1px solid black;
                                 }
                             </style>
+                            <t t-set="sign" t-value="-1" />
                             <t t-set="company_name" t-value="res_company.name.upper()" />
-                            <t t-set="vat" t-value="res_company.vat.upper() if res_company.vat else 'XXXXX'" />
+                            <t t-set="vat" t-value="res_company.company_registry.upper() if res_company.company_registry else 'XXXXX'" />
                             <t t-set="vendor_name" t-value="o.partner_id.name.upper()" />
                             <t t-set="vendor_vat" t-value="o.partner_id.vat.upper() if o.partner_id.vat else 'XXXXX'" />
-                            <t t-set="number_withholding" t-value="o.date.strftime('%Y%m') + str(o.sequence_number).rjust(8, '0')" />
-                            <t t-set="total_purchase" t-value="o.format_lang(o.amount_total + o.withholding_iva + (o.withholding_islr or 0.0))" />
+                            <t t-set="number_withholding" t-value="o.date.strftime('%Y%m') + str(o.sequence_withholding_iva).rjust(8, '0') if o.sequence_withholding_iva else 'Por definir'" />
+                            <t t-set="total_purchase" t-value="o.format_lang(o.amount_total + sign * o.withholding_iva + sign * (o.withholding_islr or 0.0))" />
                             <t t-set="amount_base" t-value="o.format_lang(o.amount_untaxed)" />
-                            <t t-set="aliquot" t-value="o.format_lang(o.invoice_tax_id.withholding_amount)" />
-                            <t t-set="amount_tax" t-value="o.format_lang(o.amount_tax + o.withholding_iva)" />
-                            <t t-set="amount_withholding" t-value="o.format_lang(o.withholding_iva)" />
-                            <t t-set="amount_total" t-value="o.format_lang(o.amount_total + (o.withholding_islr or 0.0))" />
+                            <t t-set="aliquot" t-value="o.format_lang(sign * o.invoice_tax_id.withholding_amount)" />
+                            <t t-set="amount_tax" t-value="o.format_lang(o.amount_tax + sign * o.withholding_iva)" />
+                            <t t-set="amount_withholding" t-value="o.format_lang(sign * o.withholding_iva)" />
+                            <t t-set="amount_total" t-value="o.format_lang(o.amount_total + sign * (o.withholding_islr or 0.0))" />
                             <t t-set="invoice_control_number" t-value="o.invoice_control_number or 'ID %i' % o.id" />
                             <t t-set="reference_number" t-value="o.reference_number or o.name" />
                             <t t-set="now" t-value="context_timestamp(datetime.datetime.now())" />
@@ -139,7 +140,7 @@
                                             <t t-out="o_index + 1" />
                                         </td>
                                         <td>
-                                            <span t-field="o.invoice_date_due"/>
+                                            <span t-field="o.invoice_date"/>
                                         </td>
                                         <td>
                                             <t t-out="number_withholding" />
@@ -245,7 +246,7 @@
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
                     <div class="page">
-                        <t t-if="o.withholding_islr and o.withholding_islr != 0.0">
+                        <t t-if="(o.withholding_islr or 0.0) &lt; 0.0">
                             <style>
                                 table, td, th {
                                     border-collapse: collapse;
@@ -257,18 +258,19 @@
                                     border: 1px solid black;
                                 }
                             </style>
+                            <t t-set="sign" t-value="-1" />
                             <t t-set="company_name" t-value="res_company.name.upper()" />
-                            <t t-set="vat" t-value="res_company.vat.upper() if res_company.vat else 'XXXXX'" />
+                            <t t-set="vat" t-value="res_company.company_registry.upper() if res_company.company_registry else 'XXXXX'" />
                             <t t-set="vendor_name" t-value="o.partner_id.name.upper()" />
                             <t t-set="vendor_vat" t-value="o.partner_id.vat.upper() if o.partner_id.vat else 'XXXXX'" />
                             <t t-set="now" t-value="context_timestamp(datetime.datetime.now())" />
                             <t t-set="amount_base" t-value="o.format_lang(o.amount_untaxed)" />
-                            <t t-set="amount_total" t-value="o.format_lang(o.amount_total + (o.withholding_iva or 0.0))" />
-                            <t t-set="amount_withholding" t-value="o.format_lang(o.withholding_islr)" />
+                            <t t-set="amount_total" t-value="o.format_lang(o.amount_total + sign * (o.withholding_iva or 0.0))" />
+                            <t t-set="amount_withholding" t-value="o.format_lang(sign * o.withholding_islr)" />
                             <t t-set="invoice_control_number" t-value="o.invoice_control_number or 'ID %i' % o.id" />
                             <t t-set="reference_number" t-value="o.reference_number or o.name" />
                             <t t-set="line_tax" t-value="o.get_first_withholding_islr()" />
-                            <t t-set="percentage" t-value="'%s %%%' % o.format_lang((line_tax and line_tax.tax_line_id.withholding_amount) or 0.0)" />
+                            <t t-set="percentage" t-value="'%s %%%' % o.format_lang(sign * ((line_tax and line_tax.tax_line_id.amount) or 0.0))" />
                             <table style="width: 100%;">
                                 <tbody>
                                     <tr>
@@ -360,7 +362,7 @@
                                     <tr class="full-borders">
                                         <td t-out="o_index + 1" />
                                         <td>
-                                            <span t-field="o.invoice_date_due" />
+                                            <span t-field="o.invoice_date" />
                                         </td>
                                         <td>
                                             <t t-out="invoice_control_number" />

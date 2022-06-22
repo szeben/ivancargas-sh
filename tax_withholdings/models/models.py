@@ -105,7 +105,7 @@ class AccountMoveWithHoldings(models.Model):
             filter(
                 lambda l: l.tax_line_id
                 and l.tax_line_id.withholding_type == "islr"
-                and l.tax_line_id.withholding_amount > 0.0,
+                and l.tax_line_id.amount != 0.0,
                 self.line_ids,
             ),
             None
@@ -132,13 +132,12 @@ class AccountMoveWithHoldings(models.Model):
 
     @api.depends("state", "withholding_iva", "withholding_islr")
     def _compute_secuence_withholding(self):
-        print("Load state")
         for move in self:
             if move.state == "posted":
-                if move.withholding_iva and not move.sequence_withholding_iva:
+                if ((move.withholding_iva or 0.0) < 0.0) and not move.sequence_withholding_iva:
                     move.sequence_withholding_iva = self.env["ir.sequence"].next_by_code(
                         "account.move.withholding.iva")
-                if move.withholding_islr and not move.sequence_withholding_islr:
+                if ((move.withholding_islr or 0.0) < 0.0) and not move.sequence_withholding_islr:
                     move.sequence_withholding_islr = self.env["ir.sequence"].next_by_code(
                         "account.move.withholding.islr")
 
@@ -214,7 +213,6 @@ class AccountMoveWithHoldings(models.Model):
             self.line_ids -= to_remove
 
         amount_total_tax = 0.0
-        amount_total_withholding_irsl = 0.0
         sign = 1 if self.move_type == 'entry' or self.is_outbound() else -1
 
         # ==== Mount base lines ====
@@ -227,25 +225,11 @@ class AccountMoveWithHoldings(models.Model):
 
             compute_all_vals = _compute_base_line_taxes(line)
 
-            # Calculando retensiones ISLR
-            amount_tax = sum(
+            # Calculando total de impuestos
+            amount_total_tax += sum(
                 tax.get("amount") for tax in compute_all_vals.get("taxes", [])
+                if tax.get("amount") and (tax.get("amount")/abs(tax.get("amount")) == sign)
             )
-            amount_total_tax += amount_tax
-
-            withholding = line.tax_ids.filtered(
-                lambda tax: tax.withholding_type == "islr")
-            if withholding:
-                withholding.ensure_one()
-                amount_withholding_irls = sign * withholding._compute_amount(
-                    amount_tax, 0, use_withholding=True
-                )
-                index = list(tax.get("id") for tax in compute_all_vals.get("taxes", [])).index(
-                    withholding._origin.id
-                )
-                amount_total_withholding_irsl += amount_withholding_irls
-                compute_all_vals["total_included"] += amount_withholding_irls
-                compute_all_vals["taxes"][index]['amount'] = amount_withholding_irls
 
             # Assign tags on base line
             if not recompute_tax_base_amount:
@@ -282,7 +266,7 @@ class AccountMoveWithHoldings(models.Model):
                 partner=self.partner_id
             ).get("taxes")[0]
             tax_vals["amount"] = self.invoice_tax_id._compute_amount(
-                (sign*amount_total_tax) - amount_total_withholding_irsl, 0, use_withholding=True
+                sign*amount_total_tax, 0, use_withholding=True
             )
             grouping_dict = self._get_tax_grouping_key_from_base_line(
                 line, tax_vals)
@@ -395,7 +379,3 @@ class AccountMoveWithHoldings(models.Model):
                         if report_record:
                             res['toolbar'].get('print').remove(report_record)
         return res
-
-    @api.onchange("invoice_tax_id")
-    def _onchange_invoice_tax_id(self):
-        self._onchange_invoice_line_ids()
