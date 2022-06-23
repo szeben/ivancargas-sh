@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Tax withholding IVA -->
+
+        <record id="tax_withholding_export_template_iva" model="ir.exports">
+            <field name="name">Datos para retenciones IVA</field>
+            <field name="resource">account.move</field>
+        </record>
+
+        <record model="ir.exports.line">
+            <field name="name">withholding_iva</field>
+            <field name="export_id" ref="tax_withholding_export_template_iva"/>
+        </record>
+
+        <!-- Tax withholding ISLR -->
+
+        <record id="tax_withholding_export_template_islr" model="ir.exports">
+            <field name="name">Datos para retenciones ISLR</field>
+            <field name="resource">account.move</field>
+        </record>
+
+        <record model="ir.exports.line">
+            <field name="name">withholding_islr</field>
+            <field name="export_id" ref="tax_withholding_export_template_islr"/>
+        </record>
+
+    </data>
+</odoo>

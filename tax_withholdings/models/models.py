@@ -96,21 +96,6 @@ class AccountMoveWithHoldings(models.Model):
         copy=False
     )
 
-    def format_lang(self, value):
-        return formatLang(self.env, value)
-
-    def get_first_withholding_islr(self):
-        self.ensure_one()
-        return next(
-            filter(
-                lambda l: l.tax_line_id
-                and l.tax_line_id.withholding_type == "islr"
-                and l.tax_line_id.amount != 0.0,
-                self.line_ids,
-            ),
-            None
-        )
-
     @api.depends('invoice_tax_id', 'amount_tax', 'line_ids.tax_line_id')
     def _compute_withholding(self):
         for move in self:
@@ -226,10 +211,11 @@ class AccountMoveWithHoldings(models.Model):
             compute_all_vals = _compute_base_line_taxes(line)
 
             # Calculando total de impuestos
-            amount_total_tax += sum(
-                tax.get("amount") for tax in compute_all_vals.get("taxes", [])
-                if tax.get("amount") and (tax.get("amount")/abs(tax.get("amount")) == sign)
-            )
+            if self.move_type in {'in_invoice', 'in_refund', 'in_receipt'}:
+                amount_total_tax += sum(
+                    tax.get("amount") for tax in compute_all_vals.get("taxes", [])
+                    if tax.get("amount") and (tax.get("amount")/abs(tax.get("amount")) == sign)
+                )
 
             # Assign tags on base line
             if not recompute_tax_base_amount:
@@ -259,7 +245,7 @@ class AccountMoveWithHoldings(models.Model):
                 taxes_map_entry['grouping_dict'] = grouping_dict
 
         # Calcula retensiones para el IVA
-        if self.invoice_tax_id:
+        if self.invoice_tax_id and (self.move_type in {'in_invoice', 'in_refund', 'in_receipt'}):
             tax_vals = self.invoice_tax_id._origin.with_context(force_sign=self._get_tax_force_sign()).compute_all(
                 price_unit=0,
                 currency=self.currency_id,
