@@ -321,7 +321,7 @@
                                     <td>Cod. Retención</td>
                                     <td>Base Legal Decreto 1808</td>
                                     <td>%</td>
-                                    <td>Monto Bruto</td>
+                                    <td>Monto Total</td>
                                     <td>Base</td>
                                     <td>Impuesto Retenido</td>
                                 </tr>
@@ -342,7 +342,9 @@
                                         <t t-out="r.percentage" />
                                         <span>%</span>
                                     </td>
-                                    <td></td>
+                                    <td>
+                                        <t t-out="r.total_purchase" />
+                                    </td>
                                     <td>
                                         <t t-out="r.amount_base" />
                                     </td>
@@ -354,7 +356,9 @@
                                     <td colspan="7" style="text-align: center;">
                                         <b>Totales</b>
                                     </td>
-                                    <td></td>
+                                    <td>
+                                        <t t-out="r.total_purchase" />
+                                    </td>
                                     <td>
                                         <t t-out="r.amount_base" />
                                     </td>

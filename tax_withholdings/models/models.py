@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import math
 from odoo import _, api, fields, models
-from odoo.tools.misc import formatLang
 
 
 class AccountTax(models.Model):
@@ -15,39 +13,6 @@ class AccountTax(models.Model):
         ],
         string="Retención de tipo"
     )
-    withholding_amount = fields.Float(
-        string="Importe de retención",
-        digits=(16, 4),
-        default=0.0
-    )
-
-    def _compute_amount(self, base_amount, price_unit, quantity=1.0, product=None, partner=None, use_withholding=False):
-        self.ensure_one()
-        amount = self.amount
-
-        if use_withholding and (self.withholding_type in {"iva", "islr"}):
-            amount = self.withholding_amount or amount
-
-        if self.amount_type == 'fixed':
-            if base_amount:
-                return math.copysign(quantity, base_amount) * amount
-            else:
-                return quantity * amount
-
-        price_include = self._context.get(
-            'force_price_include', self.price_include)
-
-        if self.amount_type == 'percent' and not price_include:
-            return base_amount * amount / 100
-
-        if self.amount_type == 'percent' and price_include:
-            return base_amount - (base_amount / (1 + amount / 100))
-
-        if self.amount_type == 'division' and not price_include:
-            return base_amount / (1 - amount / 100) - base_amount if (1 - amount / 100) else 0.0
-
-        if self.amount_type == 'division' and price_include:
-            return base_amount - (base_amount * (amount / 100))
 
 
 class AccountMoveWithHoldings(models.Model):
@@ -99,10 +64,10 @@ class AccountMoveWithHoldings(models.Model):
     @api.depends('invoice_tax_id', 'amount_tax', 'line_ids.tax_line_id')
     def _compute_withholding(self):
         for move in self:
-            if move._payment_state_matters():
-                amount_total_withholding_iva = 0.0
-                amount_total_withholding_islr = 0.0
+            amount_total_withholding_iva = 0.0
+            amount_total_withholding_islr = 0.0
 
+            if move._payment_state_matters():
                 for line in move.line_ids:
                     if line.tax_line_id:
                         if line.tax_line_id.withholding_type == "iva":
@@ -110,10 +75,8 @@ class AccountMoveWithHoldings(models.Model):
                         elif line.tax_line_id.withholding_type == "islr":
                             amount_total_withholding_islr += line.amount_currency
 
-                if amount_total_withholding_iva != 0.0:
-                    move.withholding_iva = amount_total_withholding_iva
-                if amount_total_withholding_islr != 0.0:
-                    move.withholding_islr = amount_total_withholding_islr
+            move.withholding_iva = amount_total_withholding_iva
+            move.withholding_islr = amount_total_withholding_islr
 
     @api.depends("state", "withholding_iva", "withholding_islr")
     def _compute_secuence_withholding(self):
@@ -127,10 +90,10 @@ class AccountMoveWithHoldings(models.Model):
                         "account.move.withholding.islr")
 
     def _recompute_tax_lines(self, recompute_tax_base_amount=False):
-        """ Compute the dynamic tax lines of the journal entry.
+        ''' Compute the dynamic tax lines of the journal entry.
 
         :param recompute_tax_base_amount: Flag forcing only the recomputation of the `tax_base_amount` field.
-        """
+        '''
         self.ensure_one()
         in_draft_mode = self != self._origin
 
@@ -155,8 +118,9 @@ class AccountMoveWithHoldings(models.Model):
                 sign = -1 if move.is_inbound() else 1
                 quantity = base_line.quantity
                 is_refund = move.move_type in ('out_refund', 'in_refund')
-                price_unit_wo_discount = sign * base_line.price_unit * \
-                    (1 - (base_line.discount / 100.0))
+                price_unit_wo_discount = sign * base_line.price_unit * (
+                    1 - (base_line.discount / 100.0)
+                )
             else:
                 handle_price_include = False
                 quantity = 1.0
@@ -244,7 +208,7 @@ class AccountMoveWithHoldings(models.Model):
                 )
                 taxes_map_entry['grouping_dict'] = grouping_dict
 
-        # Calcula retensiones para el IVA
+        # === Calcula retensiones para el IVA ===
         if self.invoice_tax_id and (self.move_type in {'in_invoice', 'in_refund', 'in_receipt'}):
             tax_vals = self.invoice_tax_id._origin.with_context(force_sign=self._get_tax_force_sign()).compute_all(
                 price_unit=0,
@@ -252,15 +216,13 @@ class AccountMoveWithHoldings(models.Model):
                 partner=self.partner_id
             ).get("taxes")[0]
             tax_vals["amount"] = self.invoice_tax_id._compute_amount(
-                sign*amount_total_tax, 0, use_withholding=True
-            )
+                sign*amount_total_tax, 0)
             grouping_dict = self._get_tax_grouping_key_from_base_line(
                 line, tax_vals)
             grouping_key = _serialize_tax_grouping_key(grouping_dict)
 
             tax_repartition_line = self.env['account.tax.repartition.line'].browse(
                 tax_vals['tax_repartition_line_id'])
-            tax = tax_repartition_line.invoice_tax_id or tax_repartition_line.refund_tax_id
 
             taxes_map_entry = taxes_map.setdefault(grouping_key, {
                 'tax_line': None,

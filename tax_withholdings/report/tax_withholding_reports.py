@@ -18,6 +18,16 @@ class MixinTaxWithholdingReport:
                 "Se requiere la fecha de Facturación/Reembolso para validar este documento"
             )
 
+        if not record.reference_number:
+            raise exceptions.ValidationError(
+                "La retención requiere el número de factura"
+            )
+
+        if not record.invoice_control_number:
+            raise exceptions.ValidationError(
+                "La retención requiere el número de retencion de factura"
+            )
+
     def now(self):
         return Datetime.context_timestamp(self, datetime.now())
 
@@ -73,7 +83,7 @@ class TaxWithholdingIVAReport(MixinTaxWithholdingReport, models.AbstractModel):
         withholding_iva = sign*record.withholding_iva
         withholding_islr = sign*(record.withholding_islr or 0.0)
         data = {
-            "aliquot": sign*record.invoice_tax_id.withholding_amount,
+            "aliquot": sign*record.invoice_tax_id.amount,
             "amount_tax": record.amount_tax + withholding_iva,
             "amount_total": record.amount_total + withholding_islr,
             "amount_withholding": withholding_iva,
@@ -118,7 +128,8 @@ class TaxWithholdingISLRReport(MixinTaxWithholdingReport, models.AbstractModel):
         withholding_iva = sign*(record.withholding_iva or 0.0)
         data = {
             "amount_total": record.amount_total + withholding_iva,
-            "amount_withholding": withholding_islr
+            "amount_withholding": withholding_islr,
+            "total_purchase": record.amount_total + withholding_iva + withholding_islr
         }
 
         first_line = next(
