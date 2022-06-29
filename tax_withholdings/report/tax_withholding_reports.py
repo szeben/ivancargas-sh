@@ -20,12 +20,12 @@ class MixinTaxWithholdingReport:
 
         if not record.reference_number:
             raise exceptions.ValidationError(
-                "La retención requiere el número de factura"
+                "La retención requiere el Número de factura"
             )
 
         if not record.invoice_control_number:
             raise exceptions.ValidationError(
-                "La retención requiere el número de retencion de factura"
+                "La retención requiere el Número de control de factura"
             )
 
     def now(self):

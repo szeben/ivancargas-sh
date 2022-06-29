@@ -53,7 +53,7 @@ class AccountMoveWithHoldings(models.Model):
         copy=False
     )
     reference_number = fields.Char(
-        string="Número de referencia",
+        string="Número de factura",
         copy=False
     )
     invoice_control_number = fields.Char(
