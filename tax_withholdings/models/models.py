@@ -175,19 +175,19 @@ class AccountMoveWithHoldings(models.Model):
                  "withholding_islr")
     def _compute_fields_to_export(self):
         for move in self:
-            if self.move_type in {'in_invoice', 'in_refund', 'in_receipt'}:
-                sign = -1
-                withholding_iva = sign*(move.withholding_iva or 0.0)
-                withholding_islr = sign*(move.withholding_islr or 0.0)
+            move.withholding_agent_vat = (
+                self.env.company.company_registry.upper()
+                if self.env.company.company_registry
+                else VAT_DEFAULT
+            )
 
-                if withholding_iva == 0.0 and withholding_islr == 0.0:
-                    return
+            sign = -1
+            withholding_iva = sign*(move.withholding_iva or 0.0)
+            withholding_islr = sign*(move.withholding_islr or 0.0)
 
-                move.withholding_agent_vat = (
-                    self.env.company.company_registry.upper()
-                    if self.env.company.company_registry
-                    else VAT_DEFAULT
-                )
+            if move.move_type in {'in_invoice', 'in_refund', 'in_receipt'} and (
+                withholding_iva != 0.0 and withholding_islr != 0.0
+            ):
                 move.retained_subject_vat = (
                     move.partner_id.vat.upper()
                     if move.partner_id.vat
@@ -202,6 +202,11 @@ class AccountMoveWithHoldings(models.Model):
                     move.aliquot_iva = sign*self.invoice_tax_id.amount
                     move.amount_tax_iva = move.amount_tax + withholding_iva
                     move.amount_total_iva = move.amount_total + withholding_islr
+                else:
+                    move.withholding_number = "0"
+                    move.aliquot_iva = 0
+                    move.amount_tax_iva = 0
+                    move.amount_total_iva = 0
 
                 if withholding_islr != 0.0:
                     move.amount_tax_islr = move.amount_tax + withholding_islr
@@ -216,6 +221,21 @@ class AccountMoveWithHoldings(models.Model):
                         )
                     )
                     move.aliquot_islr = sign*first_line.tax_line_id.amount
+                else:
+                    move.amount_tax_islr = 0
+                    move.amount_total_islr = 0
+                    move.aliquot_islr = 0
+
+            else:
+                move.retained_subject_vat = "0"
+                move.amount_total_purchase = 0.0
+                move.withholding_number = "0"
+                move.aliquot_iva = 0.0
+                move.amount_tax_iva = 0.0
+                move.amount_total_iva = 0.0
+                move.amount_tax_islr = 0.0
+                move.amount_total_islr = 0.0
+                move.aliquot_islr = 0.0
 
     def _recompute_tax_lines(self, recompute_tax_base_amount=False):
         ''' Compute the dynamic tax lines of the journal entry.
