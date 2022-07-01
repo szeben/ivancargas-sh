@@ -6,12 +6,7 @@ from odoo.fields import Datetime
 from odoo.tools.misc import formatLang
 
 
-VAT_DEFAULT = 'XXXXX'
-
-
 class MixinTaxWithholdingReport:
-    type_withholding = "iva"
-
     def validate_record(self, record):
         if not record.invoice_date:
             raise exceptions.ValidationError(
@@ -34,13 +29,9 @@ class MixinTaxWithholdingReport:
     def extract_data_by_default(self, record):
         return {
             'company_name': self.env.company.name.upper(),
-            'company_vat': (
-                self.env.company.company_registry.upper()
-                if self.env.company.company_registry
-                else VAT_DEFAULT
-            ),
+            'company_vat': record.withholding_agent_vat,
             'vendor_name': record.partner_id.name.upper(),
-            'vendor_vat': record.partner_id.vat.upper() if record.partner_id.vat else VAT_DEFAULT,
+            'vendor_vat': record.retained_subject_vat,
             'amount_base': self.format_lang(record.amount_untaxed),
             'invoice_date': record.invoice_date,
             'invoice_control_number': record.invoice_control_number or "N/A",
@@ -81,17 +72,16 @@ class TaxWithholdingIVAReport(MixinTaxWithholdingReport, models.AbstractModel):
     def extract_data(self, record):
         sign = -1
         withholding_iva = sign*record.withholding_iva
-        withholding_islr = sign*(record.withholding_islr or 0.0)
         data = {
-            "aliquot": sign*record.invoice_tax_id.amount,
-            "amount_tax": record.amount_tax + withholding_iva,
-            "amount_total": record.amount_total + withholding_islr,
+            "aliquot": record.aliquot_iva,
+            "amount_tax": record.amount_tax_iva,
+            "amount_total": record.amount_total_iva,
             "amount_withholding": withholding_iva,
-            "total_purchase": record.amount_total + withholding_iva + withholding_islr
+            "total_purchase": record.amount_total_purchase
         }
         data = {key: self.format_lang(value) for key, value in data.items()}
         if record.sequence_withholding_iva:
-            data["number_withholding"] = f"{record.invoice_date:%Y%m}{record.sequence_withholding_iva:>08}"
+            data["number_withholding"] = record.withholding_number
         else:
             data["number_withholding"] = 'Por definir'
         data["company_street"] = ' '.join([
@@ -125,23 +115,12 @@ class TaxWithholdingISLRReport(MixinTaxWithholdingReport, models.AbstractModel):
     def extract_data(self, record):
         sign = -1
         withholding_islr = sign*record.withholding_islr
-        withholding_iva = sign*(record.withholding_iva or 0.0)
         data = {
-            "amount_total": record.amount_total + withholding_iva,
+            "amount_total": record.amount_total_islr,
             "amount_withholding": withholding_islr,
-            "total_purchase": record.amount_total + withholding_iva + withholding_islr
+            "total_purchase": record.amount_total_purchase,
+            "percentage": record.aliquot_islr
         }
-
-        first_line = next(
-            filter(
-                lambda l: l.tax_line_id
-                and l.tax_line_id.withholding_type == "islr"
-                and l.tax_line_id.amount != 0.0,
-                record.line_ids,
-            )
-        )
-        data["percentage"] = sign*first_line.tax_line_id.amount
-
         data = {key: self.format_lang(value) for key, value in data.items()}
         return data
 

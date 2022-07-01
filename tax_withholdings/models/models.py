@@ -2,6 +2,8 @@
 
 from odoo import _, api, fields, models
 
+VAT_DEFAULT = 'XXXXX'
+
 
 class AccountTax(models.Model):
     _inherit = "account.tax"
@@ -61,6 +63,83 @@ class AccountMoveWithHoldings(models.Model):
         copy=False
     )
 
+    # Fields to export
+    withholding_agent_vat = fields.Char(
+        string="RIF del Agente de Retención",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True
+    )
+    retained_subject_vat = fields.Char(
+        string="RIF del Sujeto Retenido",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True
+    )
+    withholding_number = fields.Char(
+        string="Número de retención",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True
+    )
+    aliquot_iva = fields.Float(
+        string="Alicuola del IVA",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True
+    )
+    aliquot_islr = fields.Float(
+        string="Alicuola del ISLR",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True
+    )
+    amount_tax_iva = fields.Monetary(
+        string="Total de impuestos (IVA)",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True,
+        currency_field='company_currency_id'
+    )
+    amount_tax_islr = fields.Monetary(
+        string="Total de impuestos (ISLR)",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True,
+        currency_field='company_currency_id'
+    )
+    amount_total_iva = fields.Monetary(
+        string="Total menos retenciones IVA",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True,
+        currency_field='company_currency_id'
+    )
+    amount_total_islr = fields.Monetary(
+        string="Total menos retenciones ISLR",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True,
+        currency_field='company_currency_id'
+    )
+    amount_total_purchase = fields.Monetary(
+        string="Total de la compra",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True,
+        currency_field='company_currency_id'
+    )
+
     @api.depends('invoice_tax_id', 'amount_tax', 'line_ids.tax_line_id')
     def _compute_withholding(self):
         for move in self:
@@ -88,6 +167,55 @@ class AccountMoveWithHoldings(models.Model):
                 if ((move.withholding_islr or 0.0) < 0.0) and not move.sequence_withholding_islr:
                     move.sequence_withholding_islr = self.env["ir.sequence"].next_by_code(
                         "account.move.withholding.islr")
+
+    @api.depends("invoice_tax_id",
+                 "sequence_withholding_iva",
+                 "sequence_withholding_islr",
+                 "withholding_iva",
+                 "withholding_islr")
+    def _compute_fields_to_export(self):
+        for move in self:
+            if self.move_type in {'in_invoice', 'in_refund', 'in_receipt'}:
+                sign = -1
+                withholding_iva = sign*(move.withholding_iva or 0.0)
+                withholding_islr = sign*(move.withholding_islr or 0.0)
+
+                if withholding_iva == 0.0 and withholding_islr == 0.0:
+                    return
+
+                move.withholding_agent_vat = (
+                    self.env.company.company_registry.upper()
+                    if self.env.company.company_registry
+                    else VAT_DEFAULT
+                )
+                move.retained_subject_vat = (
+                    move.partner_id.vat.upper()
+                    if move.partner_id.vat
+                    else VAT_DEFAULT
+                )
+
+                move.amount_total_purchase = move.amount_total + \
+                    withholding_iva + withholding_islr
+
+                if withholding_iva != 0.0:
+                    move.withholding_number = f"{move.invoice_date:%Y%m}{move.sequence_withholding_iva:>08}"
+                    move.aliquot_iva = sign*self.invoice_tax_id.amount
+                    move.amount_tax_iva = move.amount_tax + withholding_iva
+                    move.amount_total_iva = move.amount_total + withholding_islr
+
+                if withholding_islr != 0.0:
+                    move.amount_tax_islr = move.amount_tax + withholding_islr
+                    move.amount_total_islr = move.amount_total + withholding_iva
+
+                    first_line = next(
+                        filter(
+                            lambda l: l.tax_line_id
+                            and l.tax_line_id.withholding_type == "islr"
+                            and l.tax_line_id.amount != 0.0,
+                            move.line_ids,
+                        )
+                    )
+                    move.aliquot_islr = sign*first_line.tax_line_id.amount
 
     def _recompute_tax_lines(self, recompute_tax_base_amount=False):
         ''' Compute the dynamic tax lines of the journal entry.
