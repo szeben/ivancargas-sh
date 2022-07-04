@@ -142,7 +142,9 @@
                                     <td>
                                         <t t-out="r.total_purchase" />
                                     </td>
-                                    <td></td>
+                                    <td>
+                                        <t t-out="r.vat_exempt_amount" />
+                                    </td>
                                     <td>
                                         <t t-out="r.amount_base" />
                                     </td>
@@ -166,7 +168,9 @@
                                     <td>
                                         <span t-out="r.total_purchase" />
                                     </td>
-                                    <td></td>
+                                    <td>
+                                        <t t-out="r.vat_exempt_amount" />
+                                    </td>
                                     <td>
                                         <t t-out="r.amount_base" />
                                     </td>

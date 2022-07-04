@@ -35,7 +35,6 @@
             <field name="export_id" ref="withholding_iva_export" />
         </record>
 
-        <!-- Monto total del documento -->
         <record id="wiva_amount_total_purchase" model="ir.exports.line">
             <field name="name">amount_total_purchase</field>
             <field name="export_id" ref="withholding_iva_export" />
@@ -56,20 +55,13 @@
             <field name="export_id" ref="withholding_iva_export" />
         </record>
 
-        <!-- Monto Exento del IVA -->
-        <record id="wiva_amount_total_iva" model="ir.exports.line">
-            <field name="name">amount_total_iva</field>
+        <record id="wiva_vat_exempt_amount" model="ir.exports.line">
+            <field name="name">vat_exempt_amount</field>
             <field name="export_id" ref="withholding_iva_export" />
         </record>
 
         <record id="wiva_aliquot_iva" model="ir.exports.line">
             <field name="name">aliquot_iva</field>
-            <field name="export_id" ref="withholding_iva_export" />
-        </record>
-
-        <!-- Otro -->
-        <record id="wiva_amount_tax_iva" model="ir.exports.line">
-            <field name="name">amount_tax_iva</field>
             <field name="export_id" ref="withholding_iva_export" />
         </record>
 
@@ -115,23 +107,8 @@
             <field name="export_id" ref="withholding_islr_export" />
         </record>
 
-        <record id="wislr_aliquot_islr" model="ir.exports.line">
-            <field name="name">aliquot_islr</field>
-            <field name="export_id" ref="withholding_islr_export" />
-        </record>
-
-        <record id="wislr_amount_tax_islr" model="ir.exports.line">
-            <field name="name">amount_tax_islr</field>
-            <field name="export_id" ref="withholding_islr_export" />
-        </record>
-
-        <record id="wislr_amount_total_islr" model="ir.exports.line">
-            <field name="name">amount_total_islr</field>
-            <field name="export_id" ref="withholding_islr_export" />
-        </record>
-
-        <record id="wislr_amount_total_purchase" model="ir.exports.line">
-            <field name="name">amount_total_purchase</field>
+        <record id="wislr_withholding_percentage_islr" model="ir.exports.line">
+            <field name="name">withholding_percentage_islr</field>
             <field name="export_id" ref="withholding_islr_export" />
         </record>
 

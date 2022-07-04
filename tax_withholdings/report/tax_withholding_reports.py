@@ -77,6 +77,7 @@ class TaxWithholdingIVAReport(MixinTaxWithholdingReport, models.AbstractModel):
             "amount_tax": record.amount_tax_iva,
             "amount_total": record.amount_total_iva,
             "amount_withholding": withholding_iva,
+            "vat_exempt_amount": record.vat_exempt_amount,
             "total_purchase": record.amount_total_purchase
         }
         data = {key: self.format_lang(value) for key, value in data.items()}
@@ -119,7 +120,7 @@ class TaxWithholdingISLRReport(MixinTaxWithholdingReport, models.AbstractModel):
             "amount_total": record.amount_total_islr,
             "amount_withholding": withholding_islr,
             "total_purchase": record.amount_total_purchase,
-            "percentage": record.aliquot_islr
+            "percentage": record.withholding_percentage_islr
         }
         data = {key: self.format_lang(value) for key, value in data.items()}
         return data
