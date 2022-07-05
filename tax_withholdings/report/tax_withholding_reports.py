@@ -32,7 +32,6 @@ class MixinTaxWithholdingReport:
             'company_vat': record.withholding_agent_vat,
             'vendor_name': record.partner_id.name.upper(),
             'vendor_vat': record.retained_subject_vat,
-            'amount_base': self.format_lang(record.amount_untaxed),
             'invoice_date': record.invoice_date,
             'invoice_control_number': record.invoice_control_number or "N/A",
             'reference_number': record.reference_number or (
@@ -70,14 +69,13 @@ class TaxWithholdingIVAReport(MixinTaxWithholdingReport, models.AbstractModel):
         }
 
     def extract_data(self, record):
-        sign = -1
-        withholding_iva = sign*record.withholding_iva
         data = {
             "aliquot": record.aliquot_iva,
             "amount_tax": record.amount_tax_iva,
+            "amount_base": record.amount_untaxed - record.vat_exempt_amount_iva,
             "amount_total": record.amount_total_iva,
-            "amount_withholding": withholding_iva,
-            "vat_exempt_amount": record.vat_exempt_amount,
+            "amount_withholding": record.withholding_opp_iva,
+            "vat_exempt_amount": record.vat_exempt_amount_iva,
             "total_purchase": record.amount_total_purchase
         }
         data = {key: self.format_lang(value) for key, value in data.items()}
@@ -114,11 +112,10 @@ class TaxWithholdingISLRReport(MixinTaxWithholdingReport, models.AbstractModel):
         }
 
     def extract_data(self, record):
-        sign = -1
-        withholding_islr = sign*record.withholding_islr
         data = {
+            "amount_base": record.amount_untaxed - record.vat_exempt_amount_islr,
             "amount_total": record.amount_total_islr,
-            "amount_withholding": withholding_islr,
+            "amount_withholding": record.withholding_opp_islr,
             "total_purchase": record.amount_total_purchase,
             "percentage": record.withholding_percentage_islr
         }

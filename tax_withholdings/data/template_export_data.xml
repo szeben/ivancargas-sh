@@ -46,7 +46,7 @@
         </record>
 
         <record id="wiva_withholding_iva" model="ir.exports.line">
-            <field name="name">withholding_iva</field>
+            <field name="name">withholding_opp_iva</field>
             <field name="export_id" ref="withholding_iva_export" />
         </record>
 
@@ -103,7 +103,7 @@
         </record>
 
         <record id="wislr_withholding_islr" model="ir.exports.line">
-            <field name="name">withholding_islr</field>
+            <field name="name">withholding_opp_islr</field>
             <field name="export_id" ref="withholding_islr_export" />
         </record>
 

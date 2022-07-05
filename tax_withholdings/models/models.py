@@ -123,8 +123,16 @@ class AccountMoveWithHoldings(models.Model):
         readonly=True,
         currency_field='company_currency_id'
     )
-    vat_exempt_amount = fields.Monetary(
+    vat_exempt_amount_iva = fields.Monetary(
         string="Monto excento de IVA",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True,
+        currency_field='company_currency_id'
+    )
+    vat_exempt_amount_islr = fields.Monetary(
+        string="Monto excento de ISLR",
         compute="_compute_fields_to_export",
         store=False,
         copy=False,
@@ -141,6 +149,22 @@ class AccountMoveWithHoldings(models.Model):
     )
     amount_total_purchase = fields.Monetary(
         string="Total de la compra",
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True,
+        currency_field='company_currency_id'
+    )
+    withholding_opp_iva = fields.Monetary(
+        string='Retención del IVA',
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True,
+        currency_field='company_currency_id'
+    )
+    withholding_opp_islr = fields.Monetary(
+        string='Retención del ISLR',
         compute="_compute_fields_to_export",
         store=False,
         copy=False,
@@ -190,8 +214,10 @@ class AccountMoveWithHoldings(models.Model):
             )
 
             sign = -1
-            withholding_iva = sign*(move.withholding_iva or 0.0)
-            withholding_islr = sign*(move.withholding_islr or 0.0)
+            move.withholding_opp_iva = withholding_iva = sign * \
+                (move.withholding_iva or 0.0)
+            move.withholding_opp_islr = withholding_islr = sign * \
+                (move.withholding_islr or 0.0)
 
             if move.move_type in {'in_invoice', 'in_refund', 'in_receipt'} and (
                 withholding_iva != 0.0 or withholding_islr != 0.0
@@ -226,7 +252,7 @@ class AccountMoveWithHoldings(models.Model):
                         ):
                             vat_exempt_amount += line.amount_currency
                         elif (
-                            aliquot_iva != 0.0
+                            aliquot_iva == 0.0
                             and line.tax_line_id
                             and line.tax_line_id.withholding_type == False
                             and line.tax_line_id.amount != 0.0
@@ -234,32 +260,50 @@ class AccountMoveWithHoldings(models.Model):
                             aliquot_iva = line.tax_line_id.amount
 
                     move.aliquot_iva = aliquot_iva
-                    move.vat_exempt_amount = vat_exempt_amount
+                    move.vat_exempt_amount_iva = vat_exempt_amount
 
                 else:
                     move.withholding_number = "0"
                     move.aliquot_iva = 0
                     move.amount_tax_iva = 0
                     move.amount_total_iva = 0
-                    move.vat_exempt_amount = 0
+                    move.vat_exempt_amount_iva = 0
 
                 if withholding_islr != 0.0:
                     move.amount_tax_islr = move.amount_tax + withholding_islr
                     move.amount_total_islr = move.amount_total + withholding_iva
 
-                    first_line = next(
-                        filter(
-                            lambda l: l.tax_line_id
-                            and l.tax_line_id.withholding_type == "islr"
-                            and l.tax_line_id.amount != 0.0,
-                            move.line_ids,
-                        )
-                    )
-                    move.withholding_percentage_islr = sign*first_line.tax_line_id.amount
+                    withholding_percentage_islr = 0.0
+                    vat_exempt_amount = 0.0
+
+                    for line in move.line_ids:
+                        if (
+                            not line.tax_repartition_line_id
+                            and not line.exclude_from_invoice_tab
+                            and (
+                                not line.tax_ids or not any(
+                                    tax.amount != 0.0 for tax in line.tax_ids
+                                    if tax.withholding_type == "islr"
+                                )
+                            )
+                        ):
+                            vat_exempt_amount += line.amount_currency
+                        elif (
+                            withholding_percentage_islr == 0.0
+                            and line.tax_line_id
+                            and line.tax_line_id.withholding_type == "islr"
+                            and line.tax_line_id.amount != 0.0
+                        ):
+                            withholding_percentage_islr = line.tax_line_id.amount
+
+                    move.vat_exempt_amount_islr = vat_exempt_amount
+                    move.withholding_percentage_islr = sign*withholding_percentage_islr
+
                 else:
                     move.amount_tax_islr = 0
                     move.amount_total_islr = 0
                     move.withholding_percentage_islr = 0
+                    move.vat_exempt_amount_islr = 0
 
             else:
                 move.retained_subject_vat = "0"

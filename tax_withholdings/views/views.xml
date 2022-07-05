@@ -63,6 +63,9 @@
       </field>
     </record>
 
+  </data>
+
+  <data noupdate="1">
     <record id="secuence_move_withholding_iva" model="ir.sequence">
       <field name="name">Secuencia de la retención del IVA</field>
       <field name="code">account.move.withholding.iva</field>
@@ -76,6 +79,6 @@
       <field name="number_next_actual">1</field>
       <field name="padding">1</field>
     </record>
-
   </data>
+
 </odoo>
