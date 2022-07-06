@@ -56,7 +56,7 @@
         </record>
 
         <record id="wiva_vat_exempt_amount" model="ir.exports.line">
-            <field name="name">vat_exempt_amount</field>
+            <field name="name">vat_exempt_amount_iva</field>
             <field name="export_id" ref="withholding_iva_export" />
         </record>
 
