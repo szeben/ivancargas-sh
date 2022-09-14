@@ -11,7 +11,7 @@
             "program": "/usr/bin/odoo",
             "args": [
                 "--config=${workspaceRoot}/odoo.conf",
-                "--update=tax_withholdings",
+                "--update=routes_in_invoices",
                 "--dev=reload,xml"
             ],
             "cwd": "${workspaceRoot}",
