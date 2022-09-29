@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import _, api, fields, models
+from odoo import _, api, fields, models, exceptions
 
 VAT_DEFAULT = 'XXXXX'
 
@@ -31,13 +31,13 @@ class AccountMoveWithHoldings(models.Model):
         required=False,
     )
     withholding_iva = fields.Monetary(
-        string='Retención del IVA',
+        string='Retención del IVA ',
         store=True,
         compute='_compute_withholding',
         currency_field='company_currency_id'
     )
     withholding_islr = fields.Monetary(
-        string='Retención del ISLR',
+        string='Retención del ISLR ',
         store=True,
         compute='_compute_withholding',
         currency_field='company_currency_id'
@@ -61,6 +61,11 @@ class AccountMoveWithHoldings(models.Model):
     invoice_control_number = fields.Char(
         string="Número de control de factura",
         copy=False
+    )
+    subtracting = fields.Monetary(
+        string='Sustraendo',
+        default=0.0,
+        currency_field='company_currency_id'
     )
 
     # Fields to export
@@ -171,6 +176,14 @@ class AccountMoveWithHoldings(models.Model):
         readonly=True,
         currency_field='company_currency_id'
     )
+    total_withheld = fields.Monetary(
+        string='Total retenido',
+        compute="_compute_fields_to_export",
+        store=False,
+        copy=False,
+        readonly=True,
+        currency_field='company_currency_id'
+    )
 
     @api.depends('invoice_tax_id', 'amount_tax', 'line_ids.tax_line_id')
     def _compute_withholding(self):
@@ -201,6 +214,7 @@ class AccountMoveWithHoldings(models.Model):
                         "account.move.withholding.islr")
 
     @api.depends("invoice_tax_id",
+                 "subtracting",
                  "sequence_withholding_iva",
                  "sequence_withholding_islr",
                  "withholding_iva",
@@ -217,7 +231,7 @@ class AccountMoveWithHoldings(models.Model):
             move.withholding_opp_iva = withholding_iva = sign * \
                 (move.withholding_iva or 0.0)
             move.withholding_opp_islr = withholding_islr = sign * \
-                (move.withholding_islr or 0.0)
+                (move.withholding_islr or 0.0) + move.subtracting
 
             if move.move_type in {'in_invoice', 'in_refund', 'in_receipt'} and (
                 withholding_iva != 0.0 or withholding_islr != 0.0
@@ -272,6 +286,7 @@ class AccountMoveWithHoldings(models.Model):
                 if withholding_islr != 0.0:
                     move.amount_tax_islr = move.amount_tax + withholding_islr
                     move.amount_total_islr = move.amount_total + withholding_iva
+                    move.total_withheld = withholding_islr - move.subtracting
 
                     withholding_percentage_islr = 0.0
                     vat_exempt_amount = 0.0
@@ -304,6 +319,7 @@ class AccountMoveWithHoldings(models.Model):
                     move.amount_total_islr = 0
                     move.withholding_percentage_islr = 0
                     move.vat_exempt_amount_islr = 0
+                    move.total_withheld = 0
 
             else:
                 move.retained_subject_vat = "0"
@@ -316,6 +332,7 @@ class AccountMoveWithHoldings(models.Model):
                 move.amount_total_islr = 0
                 move.withholding_percentage_islr = 0
                 move.vat_exempt_amount = 0
+                move.total_withheld = 0
 
     def _recompute_tax_lines(self, recompute_tax_base_amount=False):
         ''' Compute the dynamic tax lines of the journal entry.
@@ -494,6 +511,9 @@ class AccountMoveWithHoldings(models.Model):
                     taxes_map_entry['tax_line'].tax_base_amount = tax_base_amount
                 continue
 
+            if taxes_map_entry["tax_line"] and taxes_map_entry["tax_line"].tax_line_id.withholding_type == "islr":
+                taxes_map_entry['amount'] += self.subtracting
+
             balance = currency._convert(
                 taxes_map_entry['amount'],
                 self.company_currency_id,
@@ -513,8 +533,10 @@ class AccountMoveWithHoldings(models.Model):
                 taxes_map_entry['tax_line'].update(to_write_on_line)
             else:
                 # Create a new tax line.
-                create_method = in_draft_mode and self.env[
-                    'account.move.line'].new or self.env['account.move.line'].create
+                create_method = (
+                    in_draft_mode and self.env['account.move.line'].new
+                    or self.env['account.move.line'].create
+                )
                 tax_repartition_line_id = taxes_map_entry['grouping_dict']['tax_repartition_line_id']
                 tax_repartition_line = self.env['account.tax.repartition.line'].browse(
                     tax_repartition_line_id)
@@ -555,3 +577,38 @@ class AccountMoveWithHoldings(models.Model):
                         if report_record:
                             res['toolbar'].get('print').remove(report_record)
         return res
+
+    error_message_subtracting = _(
+        'El valor del Sustraendo de ISLR debe ser menor o igual '
+        'a la retención de ISLR. Por favor, cambie el valor del '
+        'sustraendo a "0,00" si no aplica o a un valor menor o '
+        'igual a la retención'
+    )
+
+    @api.onchange("invoice_tax_id")
+    def _onchange_invoice_tax(self):
+        if self.line_ids:
+            self._recompute_dynamic_lines(recompute_all_taxes=True)
+
+    @api.onchange("subtracting")
+    def _onchance_subtracting(self):
+        self.ensure_one()
+        sign = -1 if self.move_type == 'entry' or self.is_outbound() else 1
+
+        if self.subtracting > sign*self.withholding_islr:
+            self.subtracting = 0.0
+            raise exceptions.ValidationError(
+                self.error_message_subtracting
+            )
+
+        if self.line_ids:
+            self._recompute_dynamic_lines(recompute_all_taxes=True)
+
+    @api.constrains('subtracting')
+    def _check_subtracting(self):
+        for move in self:
+            sign = -1 if move.move_type == 'entry' or move.is_outbound() else 1
+            if move.subtracting > sign*move.withholding_islr:
+                raise exceptions.ValidationError(
+                    self.error_message_subtracting
+                )

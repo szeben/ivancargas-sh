@@ -112,5 +112,15 @@
             <field name="export_id" ref="withholding_islr_export" />
         </record>
 
+        <record id="wislr_subtracting" model="ir.exports.line">
+            <field name="name">subtracting</field>
+            <field name="export_id" ref="withholding_islr_export" />
+        </record>
+
+        <record id="wislr_total_withheld" model="ir.exports.line">
+            <field name="name">total_withheld</field>
+            <field name="export_id" ref="withholding_islr_export" />
+        </record>
+
     </data>
 </odoo>

@@ -244,14 +244,14 @@
                         <table style="width: 100%;">
                             <tbody>
                                 <tr>
-                                    <td colspan="10">
+                                    <td colspan="12">
                                         <i t-out="r.company_name" />
                                         <br />
                                         <i t-out="r.company_vat" />
                                     </td>
                                 </tr>
                                 <tr style="text-align: right;">
-                                    <td colspan="10">
+                                    <td colspan="12">
                                         <b>
                                             <span>Periodo: </span>
                                             <span t-out="now.strftime('%Y%m')" />
@@ -259,19 +259,19 @@
                                     </td>
                                 </tr>
                                 <tr style="text-align: center; font-size: large;">
-                                    <td colspan="10">
+                                    <td colspan="12">
                                         <b>Comprobante de Retención de Impuesto Sobre La Renta</b>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td colspan="10">
+                                    <td colspan="12">
                                         Para dar cumplimiento a lo establecido en el Articulo Nº 9 del reglamento parcial de
                                         la Ley de Impuesto sobre la Renta en materia de retenciones publicado en gaceta
                                         oficial Nº 36.206 decreto Nº 1.808 de fecha 12-05-1997
                                     </td>
                                 </tr>
                                 <tr style="height: 1em;">
-                                    <td colspan="10"></td>
+                                    <td colspan="12"></td>
                                 </tr>
                                 <tr>
                                     <td></td>
@@ -283,17 +283,17 @@
                                         <span t-out="r.company_name" />
                                     </td>
                                     <td colspan="2"></td>
-                                    <td colspan="3" style="border: 1px solid black; border-collapse: separate;">
+                                    <td colspan="4" style="border: 1px solid black; border-collapse: separate;">
                                         <span style="font-size: small;">
                                             <i>R.I.F Agente de Retención</i>
                                         </span>
                                         <br />
                                         <span t-out="r.company_vat" />
                                     </td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                                 <tr style="height: 1em;">
-                                    <td colspan="10"></td>
+                                    <td colspan="12"></td>
                                 </tr>
                                 <tr>
                                     <td></td>
@@ -305,17 +305,17 @@
                                         <span t-out="r.vendor_name"/>
                                     </td>
                                     <td colspan="2"></td>
-                                    <td colspan="3" style="border: 1px solid black;">
+                                    <td colspan="4" style="border: 1px solid black;">
                                         <span style="font-size: small;">
                                             <i>R.I.F sujeto Retenido</i>
                                         </span>
                                         <br />
                                         <span t-out="r.vendor_vat" />
                                     </td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                                 <tr style="height: 1em;">
-                                    <td colspan="10"></td>
+                                    <td colspan="12"></td>
                                 </tr>
                                 <tr class="full-borders">
                                     <td>Operación Nº</td>
@@ -328,6 +328,8 @@
                                     <td>Monto Total</td>
                                     <td>Base</td>
                                     <td>Impuesto Retenido</td>
+                                    <td>Sustraendo</td>
+                                    <td>Total Retenido</td>
                                 </tr>
                                 <tr class="full-borders">
                                     <td t-out="r_index + 1" />
@@ -355,6 +357,12 @@
                                     <td>
                                         <t t-out="r.amount_withholding" />
                                     </td>
+                                    <td>
+                                        <t t-out="r.subtracting" />
+                                    </td>
+                                    <td>
+                                        <t t-out="r.total_withheld" />
+                                    </td>
                                 </tr>
                                 <tr class="full-borders">
                                     <td colspan="7" style="text-align: center;">
@@ -369,22 +377,28 @@
                                     <td>
                                         <t t-out="r.amount_withholding" />
                                     </td>
+                                    <td>
+                                        <t t-out="r.subtracting" />
+                                    </td>
+                                    <td>
+                                        <t t-out="r.total_withheld" />
+                                    </td>
                                 </tr>
                                 <tr style="height: 1em;">
-                                    <td colspan="10" style="padding-left: 1rem;">
+                                    <td colspan="12" style="padding-left: 1rem;">
                                             Tipo de Retención de Impuesto: ISLR
                                     </td>
                                 </tr>
                                 <tr style="height: 1em;">
-                                    <td colspan="10" style="text-align: right;">
+                                    <td colspan="12" style="text-align: right;">
                                         <span>Monto a pagar a sujeto retenido: </span>
                                         <span t-out="r.amount_total" />
                                     </td>
                                 </tr>
                                 <tr style="text-align: center;">
                                     <td colspan="6"></td>
-                                    <td colspan="3" style="word-spacing: 5em;">/ /</td>
-                                    <td></td>
+                                    <td colspan="4" style="word-spacing: 5em;">/ /</td>
+                                    <td colspan="2"></td>
                                 </tr>
                                 <tr style="text-align: center; vertical-align: top; height: 5em;">
                                     <td></td>
@@ -395,17 +409,17 @@
                                         <span t-out="now.strftime('%d/%m/%Y')" />
                                     </td>
                                     <td colspan="2"></td>
-                                    <td colspan="3" style="border-top: 1px solid black;">
+                                    <td colspan="4" style="border-top: 1px solid black;">
                                             Fecha Recepción Sujeto Retenido
                                     </td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                                 <tr style="text-align: center; vertical-align: top;">
                                     <td colspan="6"></td>
-                                    <td colspan="3" style="border-top: 1px solid black;">
+                                    <td colspan="4" style="border-top: 1px solid black;">
                                             Sello o Firma del sujeto Retenido
                                     </td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                             </tbody>
                         </table>

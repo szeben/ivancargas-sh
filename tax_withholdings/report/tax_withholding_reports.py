@@ -117,7 +117,9 @@ class TaxWithholdingISLRReport(MixinTaxWithholdingReport, models.AbstractModel):
             "amount_total": record.amount_total_islr,
             "amount_withholding": record.withholding_opp_islr,
             "total_purchase": record.amount_total_purchase,
-            "percentage": record.withholding_percentage_islr
+            "percentage": record.withholding_percentage_islr,
+            "subtracting": record.subtracting,
+            "total_withheld": record.total_withheld
         }
         data = {key: self.format_lang(value) for key, value in data.items()}
         return data

@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "Tax withholdings",
+    'name': "Retenciones ISLR e IVA",
 
     'summary': """
-        Short (1 phrase/line) summary of the module's purpose, used as
-        subtitle on modules listing or apps.openerp.com""",
+        Genera las retenciones para impuestos de tipo ISLR e IVA en 
+        las ordenes de compra""",
 
     'description': """
-        Long description of module's purpose
+        Permite configurar, generar, imprimir reporte de retencion y 
+        exportar la base para entregar al SENIAT de lo correspondiente 
+        a las retenciones sobre ISLR e IVA
     """,
 
-    'author': "My Company",
-    'website': "http://www.yourcompany.com",
+    'author': "Techne Studio IT & Consulting",
+    'website': "https://technestudioit.com/",
 
     'license': "Other proprietary",
 
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Uncategorized',
+    'category': 'Account',
     'version': '0.1',
 
     # any module necessary for this one to work correctly
