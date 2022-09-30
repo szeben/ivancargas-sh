@@ -42,6 +42,12 @@ class AccountMoveWithHoldings(models.Model):
         compute='_compute_withholding',
         currency_field='company_currency_id'
     )
+    withholding_islr_base = fields.Monetary(
+        string='Retención base del ISLR',
+        store=True,
+        compute='_compute_withholding',
+        currency_field='company_currency_id'
+    )
     sequence_withholding_iva = fields.Char(
         string="Secuencia de la retención del IVA",
         compute="_compute_secuence_withholding",
@@ -200,7 +206,8 @@ class AccountMoveWithHoldings(models.Model):
                             amount_total_withholding_islr += line.amount_currency
 
             move.withholding_iva = amount_total_withholding_iva
-            move.withholding_islr = amount_total_withholding_islr - move.subtracting
+            move.withholding_islr_base = amount_total_withholding_islr - move.subtracting
+            move.withholding_islr = amount_total_withholding_islr
 
     @api.depends("state", "withholding_iva", "withholding_islr")
     def _compute_secuence_withholding(self):
@@ -286,7 +293,7 @@ class AccountMoveWithHoldings(models.Model):
                 if withholding_islr != 0.0:
                     move.amount_tax_islr = move.amount_tax + withholding_islr
                     move.amount_total_islr = move.amount_total + withholding_iva
-                    move.total_withheld = withholding_islr - move.subtracting
+                    move.total_withheld = sign*move.withholding_islr_base
 
                     withholding_percentage_islr = 0.0
                     vat_exempt_amount = 0.0
@@ -585,7 +592,7 @@ class AccountMoveWithHoldings(models.Model):
 
     def validate_subtracting(self, move=None):
         move = move or self
-        if abs(move.subtracting) > abs(move.withholding_islr):
+        if abs(move.subtracting) > abs(move.withholding_islr_base):
             raise exceptions.ValidationError(
                 _(
                     'El valor del Sustraendo de ISLR debe ser menor o igual '
