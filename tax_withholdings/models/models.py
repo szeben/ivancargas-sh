@@ -200,7 +200,7 @@ class AccountMoveWithHoldings(models.Model):
                             amount_total_withholding_islr += line.amount_currency
 
             move.withholding_iva = amount_total_withholding_iva
-            move.withholding_islr = amount_total_withholding_islr
+            move.withholding_islr = amount_total_withholding_islr - move.subtracting
 
     @api.depends("state", "withholding_iva", "withholding_islr")
     def _compute_secuence_withholding(self):
@@ -231,7 +231,7 @@ class AccountMoveWithHoldings(models.Model):
             move.withholding_opp_iva = withholding_iva = sign * \
                 (move.withholding_iva or 0.0)
             move.withholding_opp_islr = withholding_islr = sign * \
-                (move.withholding_islr or 0.0) + move.subtracting
+                (move.withholding_islr or 0.0)
 
             if move.move_type in {'in_invoice', 'in_refund', 'in_receipt'} and (
                 withholding_iva != 0.0 or withholding_islr != 0.0
@@ -578,37 +578,33 @@ class AccountMoveWithHoldings(models.Model):
                             res['toolbar'].get('print').remove(report_record)
         return res
 
-    error_message_subtracting = _(
-        'El valor del Sustraendo de ISLR debe ser menor o igual '
-        'a la retención de ISLR. Por favor, cambie el valor del '
-        'sustraendo a "0,00" si no aplica o a un valor menor o '
-        'igual a la retención'
-    )
-
     @api.onchange("invoice_tax_id")
     def _onchange_invoice_tax(self):
         if self.line_ids:
             self._recompute_dynamic_lines(recompute_all_taxes=True)
 
+    def validate_subtracting(self, move=None):
+        move = move or self
+        if abs(move.subtracting) > abs(move.withholding_islr):
+            raise exceptions.ValidationError(
+                _(
+                    'El valor del Sustraendo de ISLR debe ser menor o igual '
+                    'a la retención de ISLR. Por favor, cambie el valor del '
+                    'sustraendo a "0,00" si no aplica o a un valor menor o '
+                    'igual a la retención'
+                )
+            )
+
     @api.onchange("subtracting")
     def _onchance_subtracting(self):
         self.ensure_one()
-        sign = -1 if self.move_type == 'entry' or self.is_outbound() else 1
-
-        if self.subtracting > sign*self.withholding_islr:
-            self.subtracting = 0.0
-            raise exceptions.ValidationError(
-                self.error_message_subtracting
-            )
 
         if self.line_ids:
             self._recompute_dynamic_lines(recompute_all_taxes=True)
 
+        self.validate_subtracting()
+
     @api.constrains('subtracting')
     def _check_subtracting(self):
         for move in self:
-            sign = -1 if move.move_type == 'entry' or move.is_outbound() else 1
-            if move.subtracting > sign*move.withholding_islr:
-                raise exceptions.ValidationError(
-                    self.error_message_subtracting
-                )
+            self.validate_subtracting(move)
