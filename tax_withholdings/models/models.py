@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import _, api, fields, models, exceptions
+from odoo import _, api, exceptions, fields, models
 
 VAT_DEFAULT = 'XXXXX'
 
@@ -254,7 +254,7 @@ class AccountMoveWithHoldings(models.Model):
 
                 if withholding_iva != 0.0:
                     move.withholding_number = f"{move.invoice_date:%Y%m}{move.sequence_withholding_iva:>08}"
-                    move.amount_tax_iva = move.amount_tax + withholding_iva
+                    move.amount_tax_iva = move.amount_tax + withholding_iva + withholding_islr
                     move.amount_total_iva = move.amount_total + withholding_islr
 
                     aliquot_iva = 0.0
@@ -291,9 +291,9 @@ class AccountMoveWithHoldings(models.Model):
                     move.vat_exempt_amount_iva = 0
 
                 if withholding_islr != 0.0:
-                    move.amount_tax_islr = move.amount_tax + withholding_islr
-                    move.amount_total_islr = move.amount_total + withholding_iva
                     move.total_withheld = sign*move.withholding_islr_base
+                    move.amount_tax_islr = move.amount_tax + move.total_withheld
+                    move.amount_total_islr = move.amount_total + withholding_iva
 
                     withholding_percentage_islr = 0.0
                     vat_exempt_amount = 0.0

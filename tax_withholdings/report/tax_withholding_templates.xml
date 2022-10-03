@@ -355,13 +355,13 @@
                                         <t t-out="r.amount_base" />
                                     </td>
                                     <td>
-                                        <t t-out="r.amount_withholding" />
+                                        <t t-out="r.total_withheld" />
                                     </td>
                                     <td>
                                         <t t-out="r.subtracting" />
                                     </td>
                                     <td>
-                                        <t t-out="r.total_withheld" />
+                                        <t t-out="r.amount_withholding" />
                                     </td>
                                 </tr>
                                 <tr class="full-borders">
@@ -375,13 +375,13 @@
                                         <t t-out="r.amount_base" />
                                     </td>
                                     <td>
-                                        <t t-out="r.amount_withholding" />
+                                        <t t-out="r.total_withheld" />
                                     </td>
                                     <td>
                                         <t t-out="r.subtracting" />
                                     </td>
                                     <td>
-                                        <t t-out="r.total_withheld" />
+                                        <t t-out="r.amount_withholding" />
                                     </td>
                                 </tr>
                                 <tr style="height: 1em;">
