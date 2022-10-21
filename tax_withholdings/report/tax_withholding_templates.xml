@@ -121,7 +121,7 @@
                                 </tr>
                                 <tr class="full-borders">
                                     <td>
-                                        <t t-out="r_index + 1" />
+                                        <t t-out="1" />
                                     </td>
                                     <td>
                                         <t t-out="r.invoice_date.strftime('%d/%m/%Y')"/>
@@ -200,8 +200,8 @@
                         <br />
                         <div style="text-align: center;  align-content: center;">
                             <p>
-                                    Este comprobante se emite en función a lo establecido en el artículo 16 de
-                                    la Providencia Administrativa Nº SNAT-2015-0049 de fecha 10/08/2015
+                                Este comprobante se emite en función a lo establecido en el artículo 16 de
+                                la Providencia Administrativa Nº SNAT-2015-0049 de fecha 10/08/2015
                             </p>
                             <br />
                             <br />
@@ -254,8 +254,13 @@
                                     <td colspan="12">
                                         <b>
                                             <span>Periodo: </span>
-                                            <span t-out="now.strftime('%Y%m')" />
+                                            <span t-out="r.invoice_date.strftime('%Y%m')" />
                                         </b>
+                                    </td>
+                                </tr>
+                                <tr style="text-align: right;">
+                                    <td colspan="12">
+                                        <b t-out="r.number_withholding" />
                                     </td>
                                 </tr>
                                 <tr style="text-align: center; font-size: large;">
@@ -332,7 +337,7 @@
                                     <td>Total Retenido</td>
                                 </tr>
                                 <tr class="full-borders">
-                                    <td t-out="r_index + 1" />
+                                    <td t-out="1" />
                                     <td>
                                         <t t-out="r.invoice_date.strftime('%d/%m/%Y')" />
                                     </td>
