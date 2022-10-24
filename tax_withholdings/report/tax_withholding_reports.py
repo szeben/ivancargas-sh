@@ -122,6 +122,10 @@ class TaxWithholdingISLRReport(MixinTaxWithholdingReport, models.AbstractModel):
             "total_withheld": record.total_withheld
         }
         data = {key: self.format_lang(value) for key, value in data.items()}
+        if record.sequence_withholding_islr:
+            data["number_withholding"] = f"{record.invoice_date:%Y%m}{record.sequence_withholding_islr:>08}"
+        else:
+            data["number_withholding"] = 'Por definir'
         return data
 
     def validate_record(self, record):
