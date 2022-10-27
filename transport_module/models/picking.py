@@ -14,7 +14,7 @@ class stock_picking(models.Model):
     tracking_number  =  fields.Char('Tracking Number', copy=False, readonly=True, index=True)
     vehicle_id =  fields.Many2one('fleet.vehicle', 'Transport Vehicle')
     driver_id = fields.Many2one('res.partner', 'Vehicle Driver', related='vehicle_id.driver_id')
-    date = fields.Datetime('Transport Date',default = datetime.now())
+    date = fields.Datetime('Transport Date',default = fields.Datetime.now)
       
     def write(self, vals):
         if vals.get('no_of_parcels') or vals.get('lr_number'):
