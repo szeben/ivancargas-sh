@@ -253,7 +253,8 @@ class AccountMoveWithHoldings(models.Model):
                     withholding_iva + withholding_islr
 
                 if withholding_iva != 0.0:
-                    move.withholding_number = f"{move.invoice_date:%Y%m}{move.sequence_withholding_iva:>08}"
+                    date = move.date or move.invoice_date
+                    move.withholding_number = f"{date:%Y%m}{move.sequence_withholding_iva:>08}"
                     move.amount_tax_iva = move.amount_tax + withholding_iva + withholding_islr
                     move.amount_total_iva = move.amount_total + withholding_islr
 
@@ -338,7 +339,7 @@ class AccountMoveWithHoldings(models.Model):
                 move.amount_tax_islr = 0
                 move.amount_total_islr = 0
                 move.withholding_percentage_islr = 0
-                move.vat_exempt_amount = 0
+                move.vat_exempt_amount_iva = 0
                 move.total_withheld = 0
 
     def _recompute_tax_lines(self, recompute_tax_base_amount=False):
