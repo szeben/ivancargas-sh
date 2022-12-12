@@ -330,7 +330,6 @@ class AccountMoveWithHoldings(models.Model):
                     move.total_withheld = 0
 
             else:
-                move.retained_subject_vat = "0"
                 move.amount_total_purchase = 0
                 move.withholding_number = "0"
                 move.aliquot_iva = 0
