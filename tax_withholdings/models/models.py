@@ -240,15 +240,15 @@ class AccountMoveWithHoldings(models.Model):
             move.withholding_opp_islr = withholding_islr = sign * \
                 (move.withholding_islr or 0.0)
 
+            move.retained_subject_vat = (
+                move.partner_id.vat.upper()
+                if move.partner_id.vat
+                else VAT_DEFAULT
+            )
+
             if move.move_type in {'in_invoice', 'in_refund', 'in_receipt'} and (
                 withholding_iva != 0.0 or withholding_islr != 0.0
             ):
-                move.retained_subject_vat = (
-                    move.partner_id.vat.upper()
-                    if move.partner_id.vat
-                    else VAT_DEFAULT
-                )
-
                 move.amount_total_purchase = move.amount_total + \
                     withholding_iva + withholding_islr
 
