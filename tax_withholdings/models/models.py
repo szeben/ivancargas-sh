@@ -227,13 +227,13 @@ class AccountMoveWithHoldings(models.Model):
                  "withholding_iva",
                  "withholding_islr")
     def _compute_fields_to_export(self):
-        for move in self:
-            move.withholding_agent_vat = (
-                self.env.company.company_registry.upper()
-                if self.env.company.company_registry
-                else VAT_DEFAULT
-            )
+        self.withholding_agent_vat = (
+            self.env.company.company_registry.upper()
+            if self.env.company.company_registry
+            else VAT_DEFAULT
+        )
 
+        for move in self:
             sign = -1
             move.withholding_opp_iva = withholding_iva = sign * \
                 (move.withholding_iva or 0.0)
