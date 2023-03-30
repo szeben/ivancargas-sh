@@ -33,6 +33,7 @@ class MixinTaxWithholdingReport:
             'vendor_name': record.partner_id.name.upper(),
             'vendor_vat': record.retained_subject_vat,
             'invoice_date': record.invoice_date,
+            'accounting_date': record.date or record.invoice_date or self.now(),
             'invoice_control_number': record.invoice_control_number or "N/A",
             'reference_number': record.reference_number or (
                 record.name if record.state == "posted" else "Por definir"

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "Retenciones ISLR e IVA",
+    'name': "Retenciones de impuesto",
 
     'summary': """
-        Genera las retenciones para impuestos de tipo ISLR e IVA en 
-        las ordenes de compra""",
+         Permite configurar, incluir en facturas de proveedores y 
+         generar informes de retenciones de impuestos IVA e ISLR""",
 
     'description': """
         Permite configurar, generar, imprimir reporte de retencion y 
@@ -21,7 +21,7 @@
     # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Account',
-    'version': '0.1',
+    'version': '15.0.0.2',
 
     # any module necessary for this one to work correctly
     'depends': ['base', 'account'],

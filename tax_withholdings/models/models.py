@@ -220,12 +220,14 @@ class AccountMoveWithHoldings(models.Model):
                     move.sequence_withholding_islr = self.env["ir.sequence"].next_by_code(
                         "account.move.withholding.islr")
 
-    @api.depends("invoice_tax_id",
-                 "subtracting",
-                 "sequence_withholding_iva",
-                 "sequence_withholding_islr",
-                 "withholding_iva",
-                 "withholding_islr")
+    @api.depends(
+        "invoice_tax_id",
+        "subtracting",
+        "sequence_withholding_iva",
+        "sequence_withholding_islr",
+        "withholding_iva",
+        "withholding_islr"
+    )
     def _compute_fields_to_export(self):
         self.withholding_agent_vat = (
             self.env.company.company_registry.upper()
