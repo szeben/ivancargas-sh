@@ -8,7 +8,7 @@
             "stopOnEntry": false,
             "python": "${command:python.interpreterPath}",
             "console": "integratedTerminal",
-            "program": "/usr/bin/odoo",
+            "program": "/home/isaac/odoo/15.0/odoo-bin",
             "args": [
                 "--config=${workspaceRoot}/odoo.conf",
                 "--update=tax_withholdings",
