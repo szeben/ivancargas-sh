@@ -1,0 +1,50 @@
+<odoo>
+  <data>
+
+    <record id="sale_order_view_form_qty_to_invoice_inherit" model="ir.ui.view">
+      <field name="name">sale.order.form.inherit</field>
+      <field name="model">sale.order</field>
+      <field name="inherit_id" ref="sale.view_order_form" />
+      <field name="arch" type="xml">
+
+        <xpath
+          expr="//form[1]/sheet[1]/notebook[1]/page[@name='order_lines']/field[@name='order_line']/tree[1]/field[@name='qty_invoiced']"
+          position="after">
+          <field name="qty_to_invoice" optional="show" />
+        </xpath>
+
+      </field>
+    </record>
+
+    <record id="sale_order_view_tree_total_inherit" model="ir.ui.view">
+      <field name="name">sale.order.tree.inherit</field>
+      <field name="model">sale.order</field>
+      <field name="inherit_id" ref="sale.view_order_tree" />
+      <field name="arch" type="xml">
+
+        <xpath expr="//field[@name='invoice_status']" position="after">
+          <field name="total_product_uom_qty" />
+          <field name="total_qty_delivered" />
+          <field name="total_qty_invoiced" />
+          <field name="total_qty_to_invoiced" />
+        </xpath>
+
+      </field>
+    </record>
+
+    <record id="transport_entry_field_sale_order_tree_view_inherit" model="ir.ui.view">
+      <field name="name">transport.entry.field.sale.order.tree.view.inherit"</field>
+      <field name="model">transport.entry</field>
+      <field name="inherit_id" ref="transport_module.view_transport_entry_tree" />
+      <field name="arch" type="xml">
+
+        <xpath expr="//field[@name='sale_order']" position="after">
+          <field name="total_qty_to_invoiced" />
+        </xpath>
+
+      </field>
+    </record>
+
+
+  </data>
+</odoo>
