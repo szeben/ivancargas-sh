@@ -33,6 +33,7 @@ class MixinTaxWithholdingReport:
             'vendor_name': record.partner_id.name.upper(),
             'vendor_vat': record.retained_subject_vat,
             'invoice_date': record.invoice_date,
+            'accounting_date': record.date or record.invoice_date or self.now(),
             'invoice_control_number': record.invoice_control_number or "N/A",
             'reference_number': record.reference_number or (
                 record.name if record.state == "posted" else "Por definir"
@@ -57,6 +58,7 @@ class MixinTaxWithholdingReport:
 
 class TaxWithholdingIVAReport(MixinTaxWithholdingReport, models.AbstractModel):
     _name = 'report.tax_withholdings.template_tax_withholding_iva'
+    _description = 'Tax Withholding IVA Report'
 
     @api.model
     def _get_report_values(self, docids, data=None):
@@ -100,6 +102,7 @@ class TaxWithholdingIVAReport(MixinTaxWithholdingReport, models.AbstractModel):
 
 class TaxWithholdingISLRReport(MixinTaxWithholdingReport, models.AbstractModel):
     _name = 'report.tax_withholdings.template_tax_withholding_islr'
+    _description = 'Tax Withholding ISLR Report'
 
     @api.model
     def _get_report_values(self, docids, data=None):

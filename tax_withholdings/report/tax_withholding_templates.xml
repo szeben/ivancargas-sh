@@ -75,11 +75,11 @@
                                 <tr style="border-right: 1px solid black; border-left: 1px solid black;">
                                     <td colspan="11"></td>
                                     <td style="text-align: center;">
-                                        <b t-out="r.invoice_date.year" />
+                                        <b t-out="r.accounting_date.year" />
                                     </td>
                                     <td></td>
                                     <td style="text-align: center;">
-                                        <b t-out="r.invoice_date.strftime('%m')" />
+                                        <b t-out="r.accounting_date.strftime('%m')" />
                                     </td>
                                     <td></td>
                                 </tr>
@@ -254,7 +254,7 @@
                                     <td colspan="12">
                                         <b>
                                             <span>Periodo: </span>
-                                            <span t-out="r.invoice_date.strftime('%Y%m')" />
+                                            <span t-out="r.accounting_date.strftime('%Y%m')" />
                                         </b>
                                     </td>
                                 </tr>
