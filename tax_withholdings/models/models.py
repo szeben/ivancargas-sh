@@ -175,7 +175,7 @@ class AccountMoveWithHoldings(models.Model):
         currency_field='company_currency_id'
     )
     withholding_opp_islr = fields.Monetary(
-        string='Retención del ISLR',
+        string='Total retenido',
         compute="_compute_fields_to_export",
         store=False,
         copy=False,
@@ -183,7 +183,7 @@ class AccountMoveWithHoldings(models.Model):
         currency_field='company_currency_id'
     )
     total_withheld = fields.Monetary(
-        string='Total retenido',
+        string='Retención del ISLR',
         compute="_compute_fields_to_export",
         store=False,
         copy=False,

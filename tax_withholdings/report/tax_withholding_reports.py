@@ -58,6 +58,7 @@ class MixinTaxWithholdingReport:
 
 class TaxWithholdingIVAReport(MixinTaxWithholdingReport, models.AbstractModel):
     _name = 'report.tax_withholdings.template_tax_withholding_iva'
+    _description = 'Tax Withholding IVA Report'
 
     @api.model
     def _get_report_values(self, docids, data=None):
@@ -101,6 +102,7 @@ class TaxWithholdingIVAReport(MixinTaxWithholdingReport, models.AbstractModel):
 
 class TaxWithholdingISLRReport(MixinTaxWithholdingReport, models.AbstractModel):
     _name = 'report.tax_withholdings.template_tax_withholding_islr'
+    _description = 'Tax Withholding ISLR Report'
 
     @api.model
     def _get_report_values(self, docids, data=None):
