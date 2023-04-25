@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="report_invoice_freeform_print_consolidated_invoice" model="ir.actions.report">
+        <field name="name">Forma Libre</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">print_consolidated_invoice.custom_report_invoice_freeform</field>
+        <field name="report_file">print_consolidated_invoice.custom_report_invoice_freeform</field>
+        <field name="print_report_name">(object._get_report_base_filename())</field>
+        <field name="attachment">(object.state == 'posted') and ((object.name or 'INV').replace('/','_')+'.pdf')</field>
+        <field name="paperformat_id" ref="base.paperformat_euro" />
+        <field name="binding_model_id" ref="account.model_account_move" />
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="report_invoice_print_consolidated_invoice" model="ir.actions.report">
+        <field name="name">Factura Consolidada</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">print_consolidated_invoice.report_consolidated_invoice</field>
+        <field name="report_file">print_consolidated_invoice.report_consolidated_invoice</field>
+        <field name="print_report_name">(object._get_report_base_filename())</field>
+        <field name="attachment">(object.state == 'posted') and ((object.name or 'INV').replace('/','_')+'.pdf')</field>
+        <field name="paperformat_id" ref="base.paperformat_euro" />
+        <field name="binding_model_id" ref="account.model_account_move" />
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="report_invoice_print_consolidated_invoice_freeform" model="ir.actions.report">
+        <field name="name">Forma Libre Consolidada</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">print_consolidated_invoice.report_consolidated_invoice_freeform</field>
+        <field name="report_file">print_consolidated_invoice.report_consolidated_invoice_freeform</field>
+        <field name="print_report_name">(object._get_report_base_filename())</field>
+        <field name="attachment">(object.state == 'posted') and ((object.name or 'INV').replace('/','_')+'.pdf')</field>
+        <field name="paperformat_id" ref="base.paperformat_euro" />
+        <field name="binding_model_id" ref="account.model_account_move" />
+        <field name="binding_type">report</field>
+    </record>
+</odoo>
