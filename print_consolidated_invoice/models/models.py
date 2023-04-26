@@ -17,7 +17,7 @@ class AccountMoveReportCustom(models.Model):
                     "report_invoice_print_consolidated_invoice_freeform",
                 )
             ]
-            if view_type == 'tree' and remove_report_ids and \
+            if remove_report_ids and \
                     toolbar and res['toolbar'] and res['toolbar'].get('print'):
                 remove_report_records = list(filter(
                     lambda rec: rec.get("id") in remove_report_ids,
@@ -47,6 +47,7 @@ class AccountMoveReportCustom(models.Model):
                     'order_route': line.order_route,
                     'price_unit': line.x_studio_precio_unitario_bs,
                     'currency_id': line.currency_id,
+                    'inverse_rate': line.x_studio_tasa_cambio,
                     'tax_ids': line.tax_ids,
                     'quantity': line.quantity,
                     'uom': f" {line.product_uom_id.name}",

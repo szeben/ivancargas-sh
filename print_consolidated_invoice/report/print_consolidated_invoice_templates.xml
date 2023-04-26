@@ -257,7 +257,7 @@
                                                         <span style=" font-size: 13px">se calcula a
                                                             una tasa de cambio equivalente de </span>
                                                         <span
-                                                            t-field="line.currency_id.inverse_rate" />
+                                                            t-field="line.x_studio_tasa_cambio" />
 
                                                         <br />
                                                         <span>
@@ -601,7 +601,7 @@
                                                             <span style=" font-size: 13px">se calcula a
                                                                 una tasa de cambio equivalente de </span>
                                                             <span
-                                                                t-esc="line['currency_id']['inverse_rate']" />
+                                                                t-esc="line['inverse_rate']" />
 
                                                             <br />
                                                             <span>
@@ -952,7 +952,7 @@
                                                             <span style=" font-size: 13px">se calcula a
                                                                 una tasa de cambio equivalente de </span>
                                                             <span
-                                                                t-esc="line['currency_id']['inverse_rate']" />
+                                                                t-esc="line['inverse_rate']" />
 
                                                             <br />
                                                             <span>
