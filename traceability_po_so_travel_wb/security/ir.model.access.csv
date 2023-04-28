@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_traceability__po__so_travel__wb_traceability__po__so_travel__wb,traceability__po__so_travel__wb.traceability__po__so_travel__wb,model_traceability__po__so_travel__wb_traceability__po__so_travel__wb,base.group_user,1,1,1,1
