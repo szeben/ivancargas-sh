@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="forma_libre_inherit_view_report" inherit_id="print_consolidated_invoice.template_print_consolidated_invoice_freeform">
+        <xpath expr="//th[@name='th_route']" position="after">
+            <th t-if="o.move_type == 'out_invoice'">
+                <span>WB/Guia</span>
+            </th>
+        </xpath>
+
+        <xpath expr="//td[@name='account_invoice_line_order_route']" position="after">
+            <td t-if="o.move_type == 'out_invoice'">
+                <span t-field="line.wbgua_related"/>
+            </td>
+        </xpath>
+
+    </template>
+</odoo>
+
+

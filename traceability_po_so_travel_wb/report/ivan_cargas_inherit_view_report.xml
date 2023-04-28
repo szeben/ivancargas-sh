@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="ivan_cargas_inherit_view_report" inherit_id="studio_customization.odoo_studio_report_i_95d66d9d-9edb-41e7-bbf3-01d00e7c7be3">
+        <xpath expr="/t/t/div/table/thead/tr/th[2]" position="after">
+            <th t-if="o.move_type == 'out_invoice'">
+                <span>WB/Guia</span>
+            </th>
+        </xpath>
+
+        <xpath expr="/t/t/div/table/tbody/t[3]/tr/t[1]/td[2]" position="after">
+            <td t-if="o.move_type == 'out_invoice'">
+                <span t-field="line.wbgua_related"/>
+            </td>
+        </xpath>
+
+
+        <xpath expr="/t/t/div/div[2]" position="after">
+            <div class="row" t-if="o.move_type == 'in_invoice'">
+                <div class="col-3"/>
+                <div class="col-3"/>
+                <div class="col-3"/>
+                <div class="col-3">
+                    <span>
+                        <strong>WB/Guía:</strong>
+                        <br/>
+                    </span>
+                    <span t-field="o.wbgua_account_move"/>
+                </div>
+            </div>
+        </xpath>
+        <xpath expr="/t/t/div/div[3]/div[4]" position="attributes">
+            <attribute t-if="o.move_type == ' in_invoice'" name="class" separator=" " add="text-right"/>
+        </xpath>
+
+    </template>
+</odoo>

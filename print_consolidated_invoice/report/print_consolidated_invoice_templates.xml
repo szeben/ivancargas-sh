@@ -1,0 +1,1082 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="custom_report_invoice_freeform" inherit_id="account.report_invoice_with_payments">
+        <xpath expr="//t[@t-call='account.report_invoice_document']" position="replace">
+            <t t-call="print_consolidated_invoice.template_print_consolidated_invoice_freeform"/>
+        </xpath>
+    </template>
+
+    <template id="template_print_consolidated_invoice_freeform" inherit_id="account.report_invoice_document">
+        <xpath expr="//t[@t-call='web.external_layout']" position="replace">
+            <div class="custom-layout">
+                <t t-call="web.basic_layout">
+                    <t t-set="forced_vat" t-value="o.fiscal_position_id.foreign_vat"/>
+                    <t t-set="address">
+                        <address t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
+                        <div t-if="o.partner_id.vat" class="mt16">
+                            <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-esc="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
+                            <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/></div>
+                    </t>
+                    <div class="page">
+                        <div class="row">
+                            <div class="col-6">
+                                <span t-field="o.partner_id.name" class="o_bold" />
+
+                                <span t-field="o.partner_id.contact_address" />
+
+                            </div>
+                            <div class="col-6 text-right">
+                                <span t-field="o.name" class="h3" />
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+
+                                <span t-field="o.partner_id.vat" class="o_bold" />
+                                <span>
+                                    <p style="margin-bottom: 0px;">Teléfonos:</p>
+                                </span>
+                                <span t-field="o.partner_id.phone" />
+
+                            </div>
+                            <div class="col-6 text-right">
+                                <span>
+                                    <p style="margin-bottom: 0px;">
+                                        <span style="font-weight: bolder;">Fecha:</span>
+                                        <span t-field="o.invoice_date" />
+
+                                    </p>
+                                    <span>
+                                        <p style="margin-bottom: 0px;"><span
+                                                style="font-weight: bolder;">Vencimiento</span>:</p>
+                                    </span>
+                                    <span t-field="o.invoice_date_due" />
+
+                                    <span>
+                                        <p style="margin-bottom: 0px;">
+                                            <span style="font-weight: bolder;">Documento Origen:</span>
+                                        </p>
+                                        <span t-field="o.invoice_origin" />
+
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <span>
+                                    <p style="margin-bottom: 0px;"
+                                        placeholder="Type '/' for commands"
+                                        class="oe-hint oe-command-temporary-hint">
+                                        <br />
+                                    </p>
+                                </span>
+                            </div>
+                        </div>
+
+                        <t t-set="display_discount"
+                            t-value="any(l.discount for l in o.invoice_line_ids)" />
+
+                        <table class="table table-sm o_main_table" name="invoice_line_table">
+                            <thead>
+                                <tr>
+                                    <th name="th_description" class="text-left"><span>Descripción</span></th>
+                                    <th name="th_route" class="text-left"><span>Ruta</span></th>
+                                    <th name="th_quantity" class="text-left"><span>Cantidad</span></th>
+                                    <th name="th_priceunit" t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"><span>Precio Unitario</span></th>
+                                    <th name="th_price_unit" t-if="display_discount" t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                        <span>Desc.%</span>
+                                    </th>
+                                    <th name="th_taxes" t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"><span>Impuestos</span></th>
+                                    <th name="th_subtotal" class="text-left">
+                                        <span groups="account.group_show_line_subtotals_tax_excluded">Sub Total</span>
+                                        <span groups="account.group_show_line_subtotals_tax_included">Total</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="invoice_tbody">
+                                <t t-set="current_subtotal" t-value="0" />
+                                <t t-set="lines"
+                                    t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)" />
+
+                                <t t-foreach="lines" t-as="line">
+                                    <t t-set="current_subtotal"
+                                        t-value="current_subtotal + line.price_subtotal"
+                                        groups="account.group_show_line_subtotals_tax_excluded" />
+                                    <t t-set="current_subtotal"
+                                        t-value="current_subtotal + line.price_total"
+                                        groups="account.group_show_line_subtotals_tax_included" />
+
+                                    <tr t-att-class="'bg-200 font-weight-bold o_line_section' if line.display_type == 'line_section' else 'font-italic o_line_note' if line.display_type == 'line_note' else ''">
+                                        <t t-if="not line.display_type" name="account_invoice_line_accountable">
+                                            <td name="account_invoice_line_name">
+                                                <span t-field="line.name"
+                                                    t-options="{'widget': 'text'}" />
+                                            </td>
+                                            <td name="account_invoice_line_order_route">
+                                                <span t-field="line.order_route.name"
+                                                    t-options="{'widget': 'text'}" />
+                                            </td>
+                                            <td class="text-left">
+                                                <span t-field="line.quantity" />
+                                                <span t-field="line.product_uom_id"
+                                                    groups="uom.group_uom" />
+                                            </td>
+                                            <td t-attf-class="text-right {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                <span class="text-nowrap" t-field="line.x_studio_precio_unitario_bs" />
+                                            </td>
+                                            <td t-if="display_discount" t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                <span class="text-nowrap" t-field="line.discount" />
+                                            </td>
+                                            <td t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                <span
+                                                    t-esc="', '.join(map(lambda x: (x.description or x.name), line.tax_ids))"
+                                                    id="line_tax_ids" />
+                                            </td>
+                                            <td class="text-left o_price_total">
+                                                <span class="text-nowrap"
+                                                    t-field="line.credit" />
+                                            </td>
+                                        </t>
+                                        <t t-if="line.display_type == 'line_section'">
+                                            <td colspan="99">
+                                                <span t-field="line.name"
+                                                    t-options="{'widget': 'text'}" />
+                                            </td>
+                                            <t t-set="current_section" t-value="line" />
+                                            <t t-set="current_subtotal" t-value="0" />
+                                        </t>
+                                        <t t-if="line.display_type == 'line_note'">
+                                            <td colspan="99">
+                                                <span t-field="line.name"
+                                                    t-options="{'widget': 'text'}" />
+                                            </td>
+                                        </t>
+                                    </tr>
+
+                                    <t t-if="current_section and (line_last or lines[line_index+1].display_type == 'line_section')">
+                                        <tr class="is-subtotal text-right">
+                                            <td colspan="99">
+                                                <strong class="mr16">Subtotal</strong>
+                                                <span
+                                                    t-esc="current_subtotal"
+                                                    t-options='{"widget": "monetary", "display_currency": o.currency_id}'
+                                                />
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <div class="row">
+                            <div class="col">
+                                <span>
+                                    <hr />
+                                    <p style="margin-bottom: 0px;"
+                                        placeholder="Type '/' for commands"
+                                        class="oe-hint oe-command-temporary-hint">
+                                        <br />
+                                    </p>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col">
+                                <span>
+                                    <p style="margin-bottom: 0px;">
+                                        <span style="font-weight: bolder;">Observaciones:</span>
+                                    </p>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <span t-field="o.narration" />
+                            </div>
+                        </div>
+                        <div class="row">
+                        </div>
+                        <div class="row" t-if="o.move_type == 'out_invoice'">
+                            <div class="col-3" t-if="o.move_type == 'out_invoice'">
+                                <span>
+                                    <p style="margin-bottom: 0px;">Sub Total:</p>
+                                    <span t-field="o.amount_untaxed" />
+
+                                </span>
+                            </div>
+                            <div class="col-3" t-if="o.move_type == 'out_invoice'">
+                                <span>
+                                    <p style="margin-bottom: 0px;">I.V.A.:</p>
+                                    <span t-field="o.amount_tax" />
+
+                                </span>
+                            </div>
+                            <div class="col-6" t-if="o.move_type == 'out_invoice'">
+                                <span>
+                                    <p style="margin-bottom: 0px;">Total:</p>
+                                    <span t-field="o.amount_total" />
+
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <span>
+                                    <p style="margin-bottom: 0px;"
+                                        placeholder="Type '/' for commands"
+                                        class="oe-hint oe-command-temporary-hint">
+
+                                        <br />
+                                    </p>
+                                </span>
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-12" t-if="o.move_type == 'out_invoice'">
+                                <span>
+                                    <p style="margin-bottom: 0px;">
+                                        <span style=" font-size: 13px">El monto al Impuesto del
+                                            Valor Agregado (I.V.A.) EQUIVALE A </span>
+                                        <span t-field="o.amount_tax_signed" />
+
+                                        <br />
+                                        <span>
+                                            <p style="margin-bottom: 0px;">
+                                                <span style=" font-size: 13px">así como la Base
+                                                    Imponible equivalente en </span>
+                                                <span t-field="o.amount_total_signed" />
+
+                                                <br />
+                                                <span>
+                                                    <p style="margin-bottom: 0px;">
+                                                        <span style=" font-size: 13px">se calcula a
+                                                            una tasa de cambio equivalente de </span>
+                                                        <span
+                                                            t-field="line.x_studio_tasa_cambio" />
+
+                                                        <br />
+                                                        <span>
+                                                            <p style="margin-bottom: 0px;">
+                                                                <span style=" font-size: 13px">por
+                                                                    USD, en conformidad al ART.25 de
+                                                                    la Ley de Impuesto al Valor</span>
+                                                                <br />
+                                                            </p>
+                                                            <span>
+                                                                <p style="margin-bottom: 0px;">
+                                                                    Agregado <span
+                                                                        style=" font-size: 13px">y
+                                                                    al ART. 38 del Reglamento de
+                                                                    dicha Ley.</span></p>
+                                                            </span>
+                                                        </span>
+                                                    </p>
+                                                </span>
+                                            </p>
+                                        </span>
+                                    </p>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="row" t-if="o.move_type == 'out_invoice'">
+                            <div class="col-4">
+                                <span>
+                                    <p style="margin-bottom: 0px;"
+                                        placeholder="Type '/' for commands"
+                                        class="oe-hint oe-command-temporary-hint">
+                                        <br />
+                                    </p>
+                                </span>
+                            </div>
+                            <div class="col-4">
+
+                                <span>
+                                    <p style="margin-bottom: 0px;" class="text-right">
+                                        <strong>Sub Total</strong>
+                                    </p>
+                                </span>
+                            </div>
+                            <div class="col-4 text-right">
+
+                                <span t-field="o.amount_untaxed_signed" />
+                            </div>
+                        </div>
+                        <div class="row" t-if="o.move_type == 'out_invoice'">
+                            <div class="col-4">
+                                <span>
+                                    <p style="margin-bottom: 0px;" placeholder="Type '/'
+                                       for commands" class="oe-hint oe-command-temporary-hint">
+                                        <br />
+                                    </p>
+                                </span>
+                            </div>
+                            <div class="col-4">
+                                <span>
+                                    <p style="margin-bottom: 0px;" class="text-right">IVA</p>
+                                </span>
+                            </div>
+                            <div class="col-4 text-right">
+
+                                <span t-field="o.amount_tax_signed" />
+                            </div>
+                        </div>
+                        <div class="row" t-if="o.move_type == 'out_invoice'">
+                            <div class="col-4">
+                                <span>
+                                    <p style="margin-bottom: 0px;" placeholder="Type '/' for commands" class="oe-hint oe-command-temporary-hint">
+                                        <br />
+                                    </p>
+                                </span>
+                            </div>
+                            <div class="col-4">
+                                <span>
+                                    <p style="margin-bottom: 0px;" class="text-right">
+                                        <strong>Total</strong>
+                                    </p>
+                                </span>
+                            </div>
+                            <div class="col-4 o_bold text-right">
+                                <span t-field="o.amount_total_signed" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <span>
+                                    <hr />
+                                    <p style="margin-bottom: 0px;"
+                                        placeholder="Type '/' for commands"
+                                        class="oe-hint oe-command-temporary-hint">
+                                        <br />
+                                    </p>
+                                </span>
+                            </div>
+                        </div>
+                        <p t-if="o.move_type in ('out_invoice', 'in_refund') and o.payment_reference" name="payment_communication">
+                            Por favor utilice la siguiente referencia al realizar su pago: <b><span t-field="o.payment_reference"/></b>
+                        </p>
+                        <p t-if="o.invoice_payment_term_id" name="payment_term">
+                            <span t-field="o.invoice_payment_term_id.note"/>
+                        </p>
+                        <div class="col text-center" t-if="o.move_type == 'out_invoice'">
+                            <span>
+                                <p style="margin-bottom: 0px;">
+                                    <span style="font-size: 11px;">NOTA: DEPÓSITO O TRANSFERENCIA
+                                        BANCARIA A NOMBRE DE IVANCARGAS, C.A. RIF J-30805129-2</span>
+                                </p>
+                                <p style="margin-bottom: 0px;">
+                                    <span style="font-size: 11px;">CUENTA CORRIENTE N°
+                                        0102-0317-18-0000002260 DEL BANCO DE VENEZUELA
+
+                                         </span>
+                                    <br />
+                                </p>
+                            </span>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="report_consolidated_invoice">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="lang" t-value="o.partner_id.lang"/>
+                <t t-set="print_with_payments" t-value="True"/>
+                <div class="custom-layout">
+                    <t t-call="web.external_layout">
+                        <t t-set="forced_vat" t-value="o.fiscal_position_id.foreign_vat"/>
+                        <t t-set="address">
+                            <address t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
+                            <div t-if="o.partner_id.vat" class="mt16">
+                                <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-esc="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
+                                <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/></div>
+                        </t>
+                        <div class="page">
+                            <div class="row">
+                                <div class="col-6">
+                                    <span t-field="o.partner_id.name" class="o_bold" />
+
+                                    <span t-field="o.partner_id.contact_address" />
+
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-field="o.name" class="h3" />
+
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+
+                                    <span t-field="o.partner_id.vat" class="o_bold" />
+                                    <span>
+                                        <p style="margin-bottom: 0px;">Teléfonos:</p>
+                                    </span>
+                                    <span t-field="o.partner_id.phone" />
+
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">
+                                            <span style="font-weight: bolder;">Fecha:</span>
+                                            <span t-field="o.invoice_date" />
+
+                                        </p>
+                                        <span>
+                                            <p style="margin-bottom: 0px;"><span
+                                                    style="font-weight: bolder;">Vencimiento</span>:</p>
+                                        </span>
+                                        <span t-field="o.invoice_date_due" />
+
+                                        <span>
+                                            <p style="margin-bottom: 0px;">
+                                                <span style="font-weight: bolder;">Documento Origen:</span>
+                                            </p>
+                                            <span>Varios</span>
+
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <span>
+                                        <p style="margin-bottom: 0px;"
+                                            placeholder="Type '/' for commands"
+                                            class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <t t-set="display_discount"
+                                t-value="any(l.discount for l in o.invoice_line_ids)" />
+
+                            <table class="table table-sm o_main_table" name="invoice_line_table">
+                                <thead>
+                                    <tr>
+                                        <th name="th_description" class="text-left"><span>Descripción</span></th>
+                                        <th name="th_route" class="text-left"><span>Ruta</span></th>
+                                        <th name="th_quantity" class="text-left"><span>Cantidad</span></th>
+                                        <th name="th_priceunit" t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"><span>Precio Unitario</span></th>
+                                        <th name="th_price_unit" t-if="display_discount" t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                            <span>Desc.%</span>
+                                        </th>
+                                        <th name="th_taxes" t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"><span>Impuestos</span></th>
+                                        <th name="th_subtotal" class="text-left">
+                                            <span groups="account.group_show_line_subtotals_tax_excluded">Sub Total</span>
+                                            <span groups="account.group_show_line_subtotals_tax_included">Total</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="invoice_tbody">
+                                    <t t-set="current_subtotal" t-value="0" />
+                                    <t t-set="lines"
+                                        t-value="o.get_grouped_lines_by_product()" />
+
+                                    <t t-foreach="lines" t-as="line">
+                                        <tr>
+                                            <t name="account_invoice_line_accountable">
+                                                <td name="account_invoice_line_name">
+                                                    <span t-esc="line['name']"
+                                                        t-options="{'widget': 'text'}" />
+                                                </td>
+                                                <td name="account_invoice_line_order_route">
+                                                    <span t-esc="line['order_route']['name']"
+                                                        t-options="{'widget': 'text'}" />
+                                                </td>
+                                                <td class="text-left">
+                                                    <span t-esc="line['quantity']" />
+                                                    <span t-esc="line['uom']" />
+                                                </td>
+                                                <td t-attf-class="text-right {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                    <span class="text-nowrap" t-esc="line['price_unit']" />
+                                                </td>
+                                                <td t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                    <span
+                                                        t-esc="', '.join(map(lambda x: (x.description or x.name), line['tax_ids']))"
+                                                        id="line_tax_ids" />
+                                                </td>
+                                                <td class="text-left o_price_total">
+                                                    <span class="text-nowrap"
+                                                        t-esc="line['credit']" />
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <div class="row">
+                                <div class="col">
+                                    <span>
+                                        <hr />
+                                        <p style="margin-bottom: 0px;"
+                                            placeholder="Type '/' for commands"
+                                            class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">
+                                            <span style="font-weight: bolder;">Observaciones:</span>
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <span t-field="o.narration" />
+                                </div>
+                            </div>
+                            <div class="row">
+                            </div>
+                            <div class="row" t-if="o.move_type == 'out_invoice'">
+                                <div class="col-3" t-if="o.move_type == 'out_invoice'">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">Sub Total:</p>
+                                        <span t-field="o.amount_untaxed" />
+
+                                    </span>
+                                </div>
+                                <div class="col-3" t-if="o.move_type == 'out_invoice'">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">I.V.A.:</p>
+                                        <span t-field="o.amount_tax" />
+
+                                    </span>
+                                </div>
+                                <div class="col-6" t-if="o.move_type == 'out_invoice'">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">Total:</p>
+                                        <span t-field="o.amount_total" />
+
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <span>
+                                        <p style="margin-bottom: 0px;"
+                                            placeholder="Type '/' for commands"
+                                            class="oe-hint oe-command-temporary-hint">
+
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+
+
+                            <div class="row">
+                                <div class="col-12" t-if="o.move_type == 'out_invoice'">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">
+                                            <span style=" font-size: 13px">El monto al Impuesto del
+                                                Valor Agregado (I.V.A.) EQUIVALE A </span>
+                                            <span t-field="o.amount_tax_signed" />
+
+                                            <br />
+                                            <span>
+                                                <p style="margin-bottom: 0px;">
+                                                    <span style=" font-size: 13px">así como la Base
+                                                        Imponible equivalente en </span>
+                                                    <span t-field="o.amount_total_signed" />
+
+                                                    <br />
+                                                    <span>
+                                                        <p style="margin-bottom: 0px;">
+                                                            <span style=" font-size: 13px">se calcula a
+                                                                una tasa de cambio equivalente de </span>
+                                                            <span
+                                                                t-esc="line['inverse_rate']" />
+
+                                                            <br />
+                                                            <span>
+                                                                <p style="margin-bottom: 0px;">
+                                                                    <span style=" font-size: 13px">por
+                                                                        USD, en conformidad al ART.25 de
+                                                                        la Ley de Impuesto al Valor</span>
+                                                                    <br />
+                                                                </p>
+                                                                <span>
+                                                                    <p style="margin-bottom: 0px;">
+                                                                        Agregado <span
+                                                                            style=" font-size: 13px">y
+                                                                        al ART. 38 del Reglamento de
+                                                                        dicha Ley.</span></p>
+                                                                </span>
+                                                            </span>
+                                                        </p>
+                                                    </span>
+                                                </p>
+                                            </span>
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="row" t-if="o.move_type == 'out_invoice'">
+                                <div class="col-4">
+                                    <span>
+                                        <p style="margin-bottom: 0px;"
+                                            placeholder="Type '/' for commands"
+                                            class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                                <div class="col-4">
+
+                                    <span>
+                                        <p style="margin-bottom: 0px;" class="text-right">
+                                            <strong>Sub Total</strong>
+                                        </p>
+                                    </span>
+                                </div>
+                                <div class="col-4 text-right">
+
+                                    <span t-field="o.amount_untaxed_signed" />
+                                </div>
+                            </div>
+                            <div class="row" t-if="o.move_type == 'out_invoice'">
+                                <div class="col-4">
+                                    <span>
+                                        <p style="margin-bottom: 0px;" placeholder="Type '/'
+                                            for commands" class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                                <div class="col-4">
+                                    <span>
+                                        <p style="margin-bottom: 0px;" class="text-right">IVA</p>
+                                    </span>
+                                </div>
+                                <div class="col-4 text-right">
+
+                                    <span t-field="o.amount_tax_signed" />
+                                </div>
+                            </div>
+                            <div class="row" t-if="o.move_type == 'out_invoice'">
+                                <div class="col-4">
+                                    <span>
+                                        <p style="margin-bottom: 0px;" placeholder="Type '/' for commands" class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                                <div class="col-4">
+                                    <span>
+                                        <p style="margin-bottom: 0px;" class="text-right">
+                                            <strong>Total</strong>
+                                        </p>
+                                    </span>
+                                </div>
+                                <div class="col-4 o_bold text-right">
+                                    <span t-field="o.amount_total_signed" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <span>
+                                        <hr />
+                                        <p style="margin-bottom: 0px;"
+                                            placeholder="Type '/' for commands"
+                                            class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+                            <p t-if="o.move_type in ('out_invoice', 'in_refund') and o.payment_reference" name="payment_communication">
+                                Por favor utilice la siguiente referencia al realizar su pago: <b><span t-field="o.payment_reference"/></b>
+                            </p>
+                            <p t-if="o.invoice_payment_term_id" name="payment_term">
+                                <span t-field="o.invoice_payment_term_id.note"/>
+                            </p>
+                            <div class="col text-center" t-if="o.move_type == 'out_invoice'">
+                                <span>
+                                    <p style="margin-bottom: 0px;">
+                                        <span style="font-size: 11px;">NOTA: DEPÓSITO O TRANSFERENCIA
+                                            BANCARIA A NOMBRE DE IVANCARGAS, C.A. RIF J-30805129-2</span>
+                                    </p>
+                                    <p style="margin-bottom: 0px;">
+                                        <span style="font-size: 11px;">CUENTA CORRIENTE N°
+                                            0102-0317-18-0000002260 DEL BANCO DE VENEZUELA
+
+                                             </span>
+                                        <br />
+                                    </p>
+                                    <p style="margin-bottom: 0px;">
+                                        <span style=" font-size: 12px; font-style: italic; font-weight: 700">
+                                            ORIGINAL CLIENTE/COPIA SIN DERECHO A CRÉDITO FISCAL
+                                        </span>
+                                        <br/>
+                                    </p>
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_consolidated_invoice_freeform">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="lang" t-value="o.partner_id.lang"/>
+                <t t-set="print_with_payments" t-value="True"/>
+                <div class="custom-layout">
+                    <t t-call="web.basic_layout">
+                        <t t-set="forced_vat" t-value="o.fiscal_position_id.foreign_vat"/>
+                        <t t-set="address">
+                            <address t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
+                            <div t-if="o.partner_id.vat" class="mt16">
+                                <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-esc="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
+                                <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/></div>
+                        </t>
+                        <div class="page">
+                            <div class="row">
+                                <div class="col-6">
+                                    <span t-field="o.partner_id.name" class="o_bold" />
+
+                                    <span t-field="o.partner_id.contact_address" />
+
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-field="o.name" class="h3" />
+
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+
+                                    <span t-field="o.partner_id.vat" class="o_bold" />
+                                    <span>
+                                        <p style="margin-bottom: 0px;">Teléfonos:</p>
+                                    </span>
+                                    <span t-field="o.partner_id.phone" />
+
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">
+                                            <span style="font-weight: bolder;">Fecha:</span>
+                                            <span t-field="o.invoice_date" />
+
+                                        </p>
+                                        <span>
+                                            <p style="margin-bottom: 0px;"><span
+                                                    style="font-weight: bolder;">Vencimiento</span>:</p>
+                                        </span>
+                                        <span t-field="o.invoice_date_due" />
+
+                                        <span>
+                                            <p style="margin-bottom: 0px;">
+                                                <span style="font-weight: bolder;">Documento Origen:</span>
+                                            </p>
+                                            <span>Varios</span>
+
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <span>
+                                        <p style="margin-bottom: 0px;"
+                                            placeholder="Type '/' for commands"
+                                            class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <t t-set="display_discount"
+                                t-value="any(l.discount for l in o.invoice_line_ids)" />
+
+                            <table class="table table-sm o_main_table" name="invoice_line_table">
+                                <thead>
+                                    <tr>
+                                        <th name="th_description" class="text-left"><span>Descripción</span></th>
+                                        <th name="th_route" class="text-left"><span>Ruta</span></th>
+                                        <th name="th_quantity" class="text-left"><span>Cantidad</span></th>
+                                        <th name="th_priceunit" t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"><span>Precio Unitario</span></th>
+                                        <th name="th_price_unit" t-if="display_discount" t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                            <span>Desc.%</span>
+                                        </th>
+                                        <th name="th_taxes" t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"><span>Impuestos</span></th>
+                                        <th name="th_subtotal" class="text-left">
+                                            <span groups="account.group_show_line_subtotals_tax_excluded">Sub Total</span>
+                                            <span groups="account.group_show_line_subtotals_tax_included">Total</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="invoice_tbody">
+                                    <t t-set="current_subtotal" t-value="0" />
+                                    <t t-set="lines"
+                                        t-value="o.get_grouped_lines_by_product()" />
+
+                                    <t t-foreach="lines" t-as="line">
+                                        <tr>
+                                            <t name="account_invoice_line_accountable">
+                                                <td name="account_invoice_line_name">
+                                                    <span t-esc="line['name']"
+                                                        t-options="{'widget': 'text'}" />
+                                                </td>
+                                                <td name="account_invoice_line_order_route">
+                                                    <span t-esc="line['order_route']['name']"
+                                                        t-options="{'widget': 'text'}" />
+                                                </td>
+                                                <td class="text-left">
+                                                    <span t-esc="line['quantity']" />
+                                                    <span t-esc="line['uom']" />
+                                                </td>
+                                                <td t-attf-class="text-right {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                    <span class="text-nowrap" t-esc="line['price_unit']" />
+                                                </td>
+                                                <td t-attf-class="text-left {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                    <span
+                                                        t-esc="', '.join(map(lambda x: (x.description or x.name), line['tax_ids']))"
+                                                        id="line_tax_ids" />
+                                                </td>
+                                                <td class="text-left o_price_total">
+                                                    <span class="text-nowrap"
+                                                        t-esc="line['credit']" />
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <div class="row">
+                                <div class="col">
+                                    <span>
+                                        <hr />
+                                        <p style="margin-bottom: 0px;"
+                                            placeholder="Type '/' for commands"
+                                            class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">
+                                            <span style="font-weight: bolder;">Observaciones:</span>
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <span t-field="o.narration" />
+                                </div>
+                            </div>
+                            <div class="row">
+                            </div>
+                            <div class="row" t-if="o.move_type == 'out_invoice'">
+                                <div class="col-3" t-if="o.move_type == 'out_invoice'">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">Sub Total:</p>
+                                        <span t-field="o.amount_untaxed" />
+
+                                    </span>
+                                </div>
+                                <div class="col-3" t-if="o.move_type == 'out_invoice'">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">I.V.A.:</p>
+                                        <span t-field="o.amount_tax" />
+
+                                    </span>
+                                </div>
+                                <div class="col-6" t-if="o.move_type == 'out_invoice'">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">Total:</p>
+                                        <span t-field="o.amount_total" />
+
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <span>
+                                        <p style="margin-bottom: 0px;"
+                                            placeholder="Type '/' for commands"
+                                            class="oe-hint oe-command-temporary-hint">
+
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+
+
+                            <div class="row">
+                                <div class="col-12" t-if="o.move_type == 'out_invoice'">
+                                    <span>
+                                        <p style="margin-bottom: 0px;">
+                                            <span style=" font-size: 13px">El monto al Impuesto del
+                                                Valor Agregado (I.V.A.) EQUIVALE A </span>
+                                            <span t-field="o.amount_tax_signed" />
+
+                                            <br />
+                                            <span>
+                                                <p style="margin-bottom: 0px;">
+                                                    <span style=" font-size: 13px">así como la Base
+                                                        Imponible equivalente en </span>
+                                                    <span t-field="o.amount_total_signed" />
+
+                                                    <br />
+                                                    <span>
+                                                        <p style="margin-bottom: 0px;">
+                                                            <span style=" font-size: 13px">se calcula a
+                                                                una tasa de cambio equivalente de </span>
+                                                            <span
+                                                                t-esc="line['inverse_rate']" />
+
+                                                            <br />
+                                                            <span>
+                                                                <p style="margin-bottom: 0px;">
+                                                                    <span style=" font-size: 13px">por
+                                                                        USD, en conformidad al ART.25 de
+                                                                        la Ley de Impuesto al Valor</span>
+                                                                    <br />
+                                                                </p>
+                                                                <span>
+                                                                    <p style="margin-bottom: 0px;">
+                                                                        Agregado <span
+                                                                            style=" font-size: 13px">y
+                                                                        al ART. 38 del Reglamento de
+                                                                        dicha Ley.</span></p>
+                                                                </span>
+                                                            </span>
+                                                        </p>
+                                                    </span>
+                                                </p>
+                                            </span>
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="row" t-if="o.move_type == 'out_invoice'">
+                                <div class="col-4">
+                                    <span>
+                                        <p style="margin-bottom: 0px;"
+                                            placeholder="Type '/' for commands"
+                                            class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                                <div class="col-4">
+
+                                    <span>
+                                        <p style="margin-bottom: 0px;" class="text-right">
+                                            <strong>Sub Total</strong>
+                                        </p>
+                                    </span>
+                                </div>
+                                <div class="col-4 text-right">
+
+                                    <span t-field="o.amount_untaxed_signed" />
+                                </div>
+                            </div>
+                            <div class="row" t-if="o.move_type == 'out_invoice'">
+                                <div class="col-4">
+                                    <span>
+                                        <p style="margin-bottom: 0px;" placeholder="Type '/'
+                                            for commands" class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                                <div class="col-4">
+                                    <span>
+                                        <p style="margin-bottom: 0px;" class="text-right">IVA</p>
+                                    </span>
+                                </div>
+                                <div class="col-4 text-right">
+
+                                    <span t-field="o.amount_tax_signed" />
+                                </div>
+                            </div>
+                            <div class="row" t-if="o.move_type == 'out_invoice'">
+                                <div class="col-4">
+                                    <span>
+                                        <p style="margin-bottom: 0px;" placeholder="Type '/' for commands" class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                                <div class="col-4">
+                                    <span>
+                                        <p style="margin-bottom: 0px;" class="text-right">
+                                            <strong>Total</strong>
+                                        </p>
+                                    </span>
+                                </div>
+                                <div class="col-4 o_bold text-right">
+                                    <span t-field="o.amount_total_signed" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <span>
+                                        <hr />
+                                        <p style="margin-bottom: 0px;"
+                                            placeholder="Type '/' for commands"
+                                            class="oe-hint oe-command-temporary-hint">
+                                            <br />
+                                        </p>
+                                    </span>
+                                </div>
+                            </div>
+                            <p t-if="o.move_type in ('out_invoice', 'in_refund') and o.payment_reference" name="payment_communication">
+                                Por favor utilice la siguiente referencia al realizar su pago: <b><span t-field="o.payment_reference"/></b>
+                            </p>
+                            <p t-if="o.invoice_payment_term_id" name="payment_term">
+                                <span t-field="o.invoice_payment_term_id.note"/>
+                            </p>
+                            <div class="col text-center" t-if="o.move_type == 'out_invoice'">
+                                <span>
+                                    <p style="margin-bottom: 0px;">
+                                        <span style="font-size: 11px;">NOTA: DEPÓSITO O TRANSFERENCIA
+                                            BANCARIA A NOMBRE DE IVANCARGAS, C.A. RIF J-30805129-2</span>
+                                    </p>
+                                    <p style="margin-bottom: 0px;">
+                                        <span style="font-size: 11px;">CUENTA CORRIENTE N°
+                                            0102-0317-18-0000002260 DEL BANCO DE VENEZUELA
+
+                                             </span>
+                                        <br />
+                                    </p>
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>
