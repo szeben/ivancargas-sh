@@ -13,7 +13,7 @@
           <field name="purchase_order" widget="selection" attrs="{'required': [('x_studio_operacion_transporte', '=', True)], 'invisible': [('x_studio_operacion_transporte','=',False)]}" domain="[('id', 'in', product_id_related)]" />
         </xpath>
 
-        <xpath expr="//field[@name='x_studio_compra']" position="replace">
+        <xpath expr="//field[@name='sale_order']" position="after">
           <field name="purchase_order_id"/>
         </xpath>
       </field>
@@ -69,7 +69,7 @@
       <field name="model">transport.entry</field>
       <field name="inherit_id" ref="studio_customization.odoo_studio_transpor_2afb71d4-c05c-4a4b-8e37-3db5197823b8"/>
       <field name="arch" type="xml">
-        <xpath expr="//field[@name='x_studio_compra']" position="replace">
+        <xpath expr="//field[@name='sale_order']" position="after">
           <field name="purchase_order_id" />
         </xpath>
       </field>
