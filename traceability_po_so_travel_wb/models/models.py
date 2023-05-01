@@ -11,7 +11,7 @@ class StockPickingInherit(models.Model):
     _inherit = 'stock.picking'
 
     purchase_order = fields.Many2one(
-        comodel_name='purchase.order', string="Pedido de Compra")
+        comodel_name='purchase.order', string='Pedido de Compra')
 
     product_id_related = fields.Many2many(
         related='sale_id.x_studio_many2many_field_BoBwj')
