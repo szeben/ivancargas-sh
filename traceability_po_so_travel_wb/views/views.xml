@@ -1,26 +1,23 @@
 <odoo>
   <data>
-    <record model="ir.ui.view" id="view_stock_picking_inherit">
-      <field name="name">view.stock.picking.inherit</field>
+    <record model="ir.ui.view" id="stock_picking_view_form_inherit">
+      <field name="name">stock.picking.view.form.inherit</field>
       <field name="model">stock.picking</field>
       <field name="inherit_id" ref="studio_customization.odoo_studio_stock_pi_aa0e8409-ca89-4a71-886b-2739ae64914c"/>
       <field name="arch" type="xml">
         <xpath expr="//field[@name='x_studio_wbgua']" position="attributes">
           <attribute name="attrs">{"invisible": [["x_studio_operacion_transporte","=",False]], "required": [["x_studio_operacion_transporte","=",True]]}</attribute>
         </xpath>
+
         <xpath expr="//field[@name='sale_id']" position="after">
           <field name="product_id_related" invisible="1"/>
           <field name="purchase_order" widget="selection" attrs="{'required': [('x_studio_operacion_transporte', '=', True)], 'invisible': [('x_studio_operacion_transporte','=',False)]}" domain="[('id', 'in', product_id_related)]" />
         </xpath>
-
-        <xpath expr="//field[@name='sale_order']" position="after">
-          <field name="purchase_order_id"/>
-        </xpath>
       </field>
     </record>
 
-    <record model="ir.ui.view" id="view_purchase_order_inherit">
-      <field name="name">view.purchase.order.inherit</field>
+    <record model="ir.ui.view" id="purchase_order_view_form_inherit">
+      <field name="name">purchase.order.view.form.inherit</field>
       <field name="model">purchase.order</field>
       <field name="inherit_id" ref="purchase.purchase_order_form"/>
       <field name="arch" type="xml">
@@ -30,19 +27,8 @@
       </field>
     </record>
 
-    <record model="ir.ui.view" id="view_sale_order_inherit">
-      <field name="name">view.sale.order.inherit</field>
-      <field name="model">sale.order</field>
-      <field name="inherit_id" ref="sale.view_order_form"/>
-      <field name="arch" type="xml">
-        <xpath expr="//field[@name='partner_id']" position="after">
-          <field name="wbgua" readonly="1"/>
-        </xpath>
-      </field>
-    </record>
-
-    <record model="ir.ui.view" id="view_sale_order_inherit_tree">
-      <field name="name">view.sale.order.inherit.tree</field>
+    <record model="ir.ui.view" id="purchase_order_view_list_inherit">
+      <field name="name">purchase.order.view.list.inherit</field>
       <field name="model">purchase.order</field>
       <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
       <field name="arch" type="xml">
@@ -52,31 +38,31 @@
       </field>
     </record>
 
-    <record model="ir.ui.view" id="view_transport_entry_inherit_form">
-      <field name="name">view.transport.entry.inherit.form</field>
+    <record model="ir.ui.view" id="transport_entry_view_form_inherit_odoo_studio">
+      <field name="name">transport.entry.view.form.inherit.odoo.studio</field>
       <field name="model">transport.entry</field>
-      <field name="inherit_id" ref="transport_module.view_transport_entry_details_form"/>
+      <field name="inherit_id" ref="studio_customization.odoo_studio_transpor_13d599dc-1305-49d1-b107-b71814313789"/>
       <field name="arch" type="xml">
         <xpath expr="//field[@name='sale_order']" position="replace">
-          <field name="sale_order_id"/>
+          <field name="sale_order_id" string="Orden de Venta" />
           <field name="purchase_order_id"/>
         </xpath>
       </field>
     </record>
 
-    <record model="ir.ui.view" id="view_transport_entry_inherit_tree">
-      <field name="name">view.transport.entry.inherit.tree</field>
+    <record model="ir.ui.view" id="transport_entry_view_list_inherit">
+      <field name="name">transport.entry.view.list.inherit</field>
       <field name="model">transport.entry</field>
-      <field name="inherit_id" ref="studio_customization.odoo_studio_transpor_2afb71d4-c05c-4a4b-8e37-3db5197823b8"/>
+      <field name="inherit_id" ref="transport_module.view_transport_entry_tree"/>
       <field name="arch" type="xml">
-        <xpath expr="//field[@name='sale_order']" position="after">
-          <field name="purchase_order_id" />
+        <xpath expr="//field[@name='date']" position="after">
+          <field name="purchase_order_id"/>
         </xpath>
       </field>
     </record>
 
-    <record model="ir.ui.view" id="view_sale_order_list_inherit">
-      <field name="name">view.sale_order.list.inherit</field>
+    <record model="ir.ui.view" id="sale_order_view_list_inherit">
+      <field name="name">sale.order.view.list.inherit</field>
       <field name="model">sale.order</field>
       <field name="inherit_id" ref="routes_in_invoices.view_order_form_inherit"/>
       <field name="arch" type="xml">
@@ -86,9 +72,8 @@
       </field>
     </record>
 
-
-    <record model="ir.ui.view" id="view_sale_order_tree_inherit">
-      <field name="name">view.sale_order.tree.inherit</field>
+    <record model="ir.ui.view" id="sale_order_view_tree_inherit">
+      <field name="name">sale.order.view.tree.inherit</field>
       <field name="model">sale.order</field>
       <field name="inherit_id" ref="sale.view_order_tree"/>
       <field name="arch" type="xml">
@@ -98,19 +83,19 @@
       </field>
     </record>
 
-    <record model="ir.ui.view" id="view_account_move_form_list_inherit">
-      <field name="name">view.account.move.form.list.inherit</field>
+    <record model="ir.ui.view" id="account_move_view_list_inherit">
+      <field name="name">account.move.view.list.inherit</field>
       <field name="model">account.move</field>
-      <field name="inherit_id" ref="studio_customization.odoo_studio_account__55ca94f3-be93-4a44-81ab-13f1e5e5d2d7"/>
+      <field name="inherit_id" ref="account.view_move_form"/>
       <field name="arch" type="xml">
-        <xpath expr="//form[1]/sheet[1]/notebook[1]/page[1]/field[@name='invoice_line_ids']/tree[1]/field[@name='order_route']" position="after">
+        <xpath expr="//tree/field[@name='quantity']" position="before">
           <field name="wbgua_related" readonly="1" attrs="{'column_invisible': [('parent.move_type','!=','out_invoice')]}"/>
         </xpath>
       </field>
     </record>
 
-    <record model="ir.ui.view" id="view_account_move_form_inherit">
-      <field name="name">view.account.move.form.inherit</field>
+    <record model="ir.ui.view" id="account_move_view_form_inherit">
+      <field name="name">account.move.view.form.inherit</field>
       <field name="model">account.move</field>
       <field name="inherit_id" ref="account.view_move_form"/>
       <field name="arch" type="xml">
@@ -122,6 +107,3 @@
 
   </data>
 </odoo>
-
-
-

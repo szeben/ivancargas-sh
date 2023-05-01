@@ -15,7 +15,7 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'stock',
+    'category': 'Uncategorized',
     'version': '15.0.0.1',
 
     # any module necessary for this one to work correctly
@@ -26,8 +26,8 @@
         # 'security/ir.model.access.csv',
         'views/views.xml',
         'views/templates.xml',
-        'report/ivan_cargas_inherit_view_report.xml',
-        'report/forma_libre_inherit_view_report.xml'
+        'report/forma_libre_inherit_view_report.xml',
+        'report/ivan_cargas_inherit_view_report.xml'
     ],
     # only loaded in demonstration mode
     'demo': [
