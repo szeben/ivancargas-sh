@@ -174,17 +174,19 @@ class StockPickingInherit(models.Model):
 
                         sl_wbgua_anterior = sale_line.wbgua
 
-                        if (sl_wbgua_anterior):
+                        if (move_line.quantity_done > 0):
 
-                            sale_line.write(
-                                {'wbgua': f"{sale_line.wbgua} / {self.x_studio_wbgua}"})
+                            if (sl_wbgua_anterior):
 
-                            body = f"{sale_line.name} Wb/guía: {sl_wbgua_anterior} ---> {sale_line.wbgua}"
-                            order_line_obj.message_post(body=body)
-                        else:
-                            sale_line.write({'wbgua': self.x_studio_wbgua})
-                            body = f"{sale_line.name} Wb/guía: {sale_line.wbgua}"
-                            order_line_obj.message_post(body=body)
+                                sale_line.write(
+                                    {'wbgua': f"{sale_line.wbgua} / {self.x_studio_wbgua}"})
+
+                                body = f"{sale_line.name} Wb/guía: {sl_wbgua_anterior} ---> {sale_line.wbgua}"
+                                order_line_obj.message_post(body=body)
+                            else:
+                                sale_line.write({'wbgua': self.x_studio_wbgua})
+                                body = f"{sale_line.name} Wb/guía: {sale_line.wbgua}"
+                                order_line_obj.message_post(body=body)
 
         # Call `_action_done`.
         if self.env.context.get('picking_ids_not_to_backorder'):
