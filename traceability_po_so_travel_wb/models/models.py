@@ -213,14 +213,16 @@ class PurchaseOrderInherit(models.Model):
 
         res = super().action_create_invoice()
 
-        body = "Factura de proveedor creada"
-        self.message_post(body=body)
+        for record in self:
+            body = "Factura de proveedor creada"
+            record.message_post(body=body)
 
         return res
 
     def _prepare_invoice(self):
         invoice_vals = super(PurchaseOrderInherit, self)._prepare_invoice()
         invoice_vals['wbgua_account_move'] = self.wbgua
+
         return invoice_vals
 
 
@@ -233,8 +235,9 @@ class SaleOrderInherit(models.Model):
     def _create_invoices(self, **option_values):
         res = super()._create_invoices(**option_values)
 
-        body = "Factura de cliente creada"
-        self.message_post(body=body)
+        for record in self:
+            body = "Factura de cliente creada"
+            record.message_post(body=body)
 
         return res
 
