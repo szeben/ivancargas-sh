@@ -49,7 +49,7 @@
                                     <td></td>
                                     <td colspan="2">Fecha de Emisión:</td>
                                     <td colspan="2">
-                                        <b t-out="now.strftime('%d/%m/%Y')" />
+                                        <b t-out="r.tsc_tax_withholding_date.strftime('%d/%m/%Y')" />
                                     </td>
                                 </tr>
                                 <tr style="border-right: 1px solid black; border-left: 1px solid black;">
@@ -411,7 +411,7 @@
                                         <span>Sello y Firma Agente de Retención</span>
                                         <br />
                                         <span>Fecha</span>
-                                        <span t-out="now.strftime('%d/%m/%Y')" />
+                                        <span t-out="r.tsc_tax_withholding_date.strftime('%d/%m/%Y')" />
                                     </td>
                                     <td colspan="2"></td>
                                     <td colspan="4" style="border-top: 1px solid black;">
