@@ -19,6 +19,13 @@
       <field name="model">account.move</field>
       <field name="inherit_id" ref="account.view_move_form" />
       <field name="arch" type="xml">
+        <xpath expr="//group/field[@name='date']" position="after">
+            <field name="tsc_tax_withholding_date" string="Fecha de retención de impuestos"
+              attrs="{
+                  'invisible': [('move_type', 'in', ('out_invoice', 'out_refund', 'out_receipt'))],
+                  'readonly': [('state', '!=', 'draft')],
+              }"/>
+        </xpath>
 
         <field name="invoice_vendor_bill_id" position="after">
           <field name="invoice_tax_id" attrs="{'invisible': [('move_type', 'not in', ('in_invoice', 'in_refund', 'in_receipt'))], 'readonly': [('state', '!=', 'draft')]}" />

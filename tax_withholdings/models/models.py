@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from odoo import _, api, exceptions, fields, models
+from odoo.tools.misc import formatLang
+from odoo.tools import date_utils
+from collections import defaultdict
+import json
 
 VAT_DEFAULT = 'XXXXX'
 
@@ -189,6 +193,18 @@ class AccountMoveWithHoldings(models.Model):
         copy=False,
         readonly=True,
         currency_field='company_currency_id'
+    )
+    tsc_tax_withholding_date = fields.Date(
+        string='Fecha de retención de impuestos',
+        help='Fecha en la que se realizan las retenciones de impuestos asociados a la factura. Para efectos del comprobante de retención corresponde a la fecha de emisión.',
+        required=False,
+        index=True,
+        store=True,
+        readonly=False,
+        states={'draft': [('readonly', False)]},
+        copy=True,
+        tracking=True,
+        default=fields.Date.context_today
     )
 
     @api.depends('invoice_tax_id', 'amount_tax', 'line_ids.tax_line_id')
@@ -494,6 +510,13 @@ class AccountMoveWithHoldings(models.Model):
 
         # ==== Pre-process taxes_map ====
         taxes_map = self._preprocess_taxes_map(taxes_map)
+        total_isrl_count = 0
+        has_edit = False
+        for taxes_map_entry in taxes_map.values():
+            if has_edit == False and len(taxes_map.values()) > 0 and self.subtracting != 0:
+                if taxes_map_entry['tax_line'].tax_line_id.withholding_type == 'islr' and taxes_map_entry['amount'] != 0:
+                    taxes_map_entry['amount'] += self.subtracting
+                    has_edit = True
 
         # ==== Process taxes_map ====
         for taxes_map_entry in taxes_map.values():
@@ -519,9 +542,8 @@ class AccountMoveWithHoldings(models.Model):
                 if taxes_map_entry['tax_line']:
                     taxes_map_entry['tax_line'].tax_base_amount = tax_base_amount
                 continue
-
             if taxes_map_entry["tax_line"] and taxes_map_entry["tax_line"].tax_line_id.withholding_type == "islr":
-                taxes_map_entry['amount'] += self.subtracting
+                taxes_map_entry['amount'] = taxes_map_entry['amount']
 
             balance = currency._convert(
                 taxes_map_entry['amount'],
