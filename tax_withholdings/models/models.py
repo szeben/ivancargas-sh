@@ -433,7 +433,7 @@ class AccountMoveWithHoldings(models.Model):
 
         amount_total_tax = 0.0
         sign = 1 if self.move_type == 'entry' or self.is_outbound() else -1
-
+        line = []
         # ==== Mount base lines ====
         for line in self.line_ids.filtered(lambda line: not line.tax_repartition_line_id):
             # Don't call compute_all if there is no tax.
@@ -479,7 +479,7 @@ class AccountMoveWithHoldings(models.Model):
                 taxes_map_entry['grouping_dict'] = grouping_dict
 
         # === Calcula retensiones para el IVA ===
-        if self.invoice_tax_id and (self.move_type in {'in_invoice', 'in_refund', 'in_receipt'}):
+        if self.invoice_tax_id and (self.move_type in {'in_invoice', 'in_refund', 'in_receipt'}) and len(line) > 0:
             tax_vals = self.invoice_tax_id._origin.with_context(force_sign=self._get_tax_force_sign()).compute_all(
                 price_unit=0,
                 currency=self.currency_id,
